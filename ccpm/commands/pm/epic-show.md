@@ -1,6 +1,6 @@
 ---
-allowed-tools: Bash(bash .claude/scripts/pm/epic-show.sh $ARGUMENTS)
+allowed-tools: Bash(bash ccpm/scripts/pm/epic-show.sh $ARGUMENTS)
 ---
 
 Output:
-!bash .claude/scripts/pm/epic-show.sh $ARGUMENTS
+!bash ccpm/scripts/pm/epic-show.sh $ARGUMENTS
