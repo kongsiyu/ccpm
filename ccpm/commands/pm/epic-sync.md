@@ -79,7 +79,8 @@ awk '
     in_tasks=0
     # When we hit the next section after Tasks Created, add Stats
     if (total_tasks) {
-      print "## Stats\n"
+      print "## Stats"
+      print ""
       print "Total tasks: " total_tasks
       print "Parallel tasks: " parallel_tasks " (can be worked on simultaneously)"
       print "Sequential tasks: " sequential_tasks " (have dependencies)"
@@ -99,7 +100,8 @@ awk '
   END {
     # If we were still in tasks section at EOF, add stats
     if (in_tasks && total_tasks) {
-      print "## Stats\n"
+      print "## Stats"
+      print ""
       print "Total tasks: " total_tasks
       print "Parallel tasks: " parallel_tasks " (can be worked on simultaneously)"
       print "Sequential tasks: " sequential_tasks " (have dependencies)"

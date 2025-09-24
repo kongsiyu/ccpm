@@ -3,8 +3,15 @@ echo "Getting epics..."
 echo ""
 echo ""
 
-[ ! -d ".claude/epics" ] && echo "📁 No epics directory found. Create your first epic with: /pm:prd-parse <feature-name>" && exit 0
-[ -z "$(ls -d .claude/epics/*/ 2>/dev/null)" ] && echo "📁 No epics found. Create your first epic with: /pm:prd-parse <feature-name>" && exit 0
+if [ ! -d ".claude/epics" ]; then
+  echo "📁 No epics directory found. Create your first epic with: /pm:prd-parse <feature-name>"
+  exit 0
+fi
+epic_dirs=$(ls -d .claude/epics/*/ 2>/dev/null || true)
+if [ -z "$epic_dirs" ]; then
+  echo "📁 No epics found. Create your first epic with: /pm:prd-parse <feature-name>"
+  exit 0
+fi
 
 echo "📚 Project Epics"
 echo "================"
@@ -31,7 +38,7 @@ for dir in .claude/epics/*/; do
   [ -z "$p" ] && p="0%"
 
   # Count tasks
-  t=$(ls "$dir"[0-9]*.md 2>/dev/null | wc -l)
+  t=$(ls "$dir"/[0-9]*.md 2>/dev/null | wc -l)
 
   # Format output with GitHub issue number if available
   if [ -n "$g" ]; then
