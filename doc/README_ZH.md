@@ -388,14 +388,14 @@ GitHub无需知道工作是如何完成的——只需知道工作已完成。
 
    ```bash
    cd path/to/your/project/
-   curl -sSL https://raw.githubusercontent.com/automazeio/ccpm/main/ccpm.sh | bash
-   # 或：wget -qO- https://raw.githubusercontent.com/automazeio/ccpm/main/ccpm.sh | bash
+   curl -sSL https://automaze.io/ccpm | bash
+   # 或：wget -qO- https://automaze.io/ccpm | bash
    ```
 
    #### Windows（PowerShell）
    ```bash
    cd path/to/your/project/
-   iwr -useb https://raw.githubusercontent.com/automazeio/ccpm/main/ccpm.bat | iex
+   iwr -useb https://automaze.io/ccpm | iex
    ```
    > ⚠️ **重要**：如果你已有`.claude`目录，请将此仓库克隆到不同目录，然后将克隆的`.claude`目录内容复制到你项目的`.claude`目录中。
 
