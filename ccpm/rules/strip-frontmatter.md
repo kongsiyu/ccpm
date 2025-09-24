@@ -39,7 +39,9 @@ Always strip frontmatter when:
 gh issue create --body-file task.md
 
 # Good - strips frontmatter and specifies repo
-REPO=$(git remote get-url origin | sed 's/.*github.com[:/]\(.*\)\.git/\1/')
+remote_url=$(git remote get-url origin 2>/dev/null || echo "")
+REPO=$(echo "$remote_url" | sed 's|.*github.com[:/]||' | sed 's|\.git$||')
+[ -z "$REPO" ] && REPO="user/repo"
 sed '1,/^---$/d; 1,/^---$/d' task.md > /tmp/clean.md
 gh issue create --repo "$REPO" --body-file /tmp/clean.md
 ```

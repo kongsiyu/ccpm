@@ -58,7 +58,9 @@ fi
 #### First, detect the GitHub repository:
 ```bash
 # Get the current repository from git remote
-REPO=$(git remote get-url origin | sed 's/.*github.com[:/]\(.*\)\.git/\1/' || echo "user/repo")
+remote_url=$(git remote get-url origin 2>/dev/null || echo "")
+REPO=$(echo "$remote_url" | sed 's|.*github.com[:/]||' | sed 's|\.git$||')
+[ -z "$REPO" ] && REPO="user/repo"
 echo "Creating issues in repository: $REPO"
 ```
 
@@ -296,19 +298,19 @@ If NOT using gh-sub-issue, add task list to epic:
 ```bash
 if [ "$use_subissues" = false ]; then
   # Get current epic body
-  gh issue view {epic_number} --json body -q .body > /tmp/epic-body.md
+  gh issue view ${epic_number} --json body -q .body > /tmp/epic-body.md
 
   # Append task list
   cat >> /tmp/epic-body.md << 'EOF'
 
   ## Tasks
-  - [ ] #{task1_number} {task1_name}
-  - [ ] #{task2_number} {task2_name}
-  - [ ] #{task3_number} {task3_name}
+  - [ ] #${task1_number} ${task1_name}
+  - [ ] #${task2_number} ${task2_name}
+  - [ ] #${task3_number} ${task3_name}
   EOF
 
   # Update epic issue
-  gh issue edit {epic_number} --body-file /tmp/epic-body.md
+  gh issue edit ${epic_number} --body-file /tmp/epic-body.md
 fi
 ```
 
