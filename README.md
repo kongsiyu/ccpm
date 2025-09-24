@@ -1,5 +1,7 @@
 # Claude Code PM
 
+**[中文文档 (Chinese Documentation)](doc/README_ZH.md)**
+
 [![Automaze](https://img.shields.io/badge/By-automaze.io-4b3baf)](https://automaze.io)
 &nbsp;
 [![Claude Code](https://img.shields.io/badge/+-Claude%20Code-d97757)](https://github.com/automazeio/ccpm/blob/main/README.md)
