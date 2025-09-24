@@ -43,7 +43,13 @@ if [ ! -z "$epic_issue" ]; then
   
   # For each task, check its status and update checkbox
   for task_file in .claude/epics/$ARGUMENTS/[0-9]*.md; do
-    task_issue=$(grep 'github:' $task_file | grep -oE '[0-9]+$')
+    # Extract task issue number
+    task_github_line=$(grep 'github:' "$task_file" 2>/dev/null || true)
+    if [ -n "$task_github_line" ]; then
+      task_issue=$(echo "$task_github_line" | grep -oE '[0-9]+$' || true)
+    else
+      task_issue=""
+    fi
     task_status=$(grep 'status:' $task_file | cut -d: -f2 | tr -d ' ')
     
     if [ "$task_status" = "closed" ]; then
