@@ -29,6 +29,9 @@ for epic_dir in .claude/epics/*/; do
     if [ -n "$deps_line" ]; then
       deps=$(echo "$deps_line" | sed 's/^depends_on: *//')
       deps=$(echo "$deps" | sed 's/^\[//' | sed 's/\]$//')
+      # Trim whitespace and handle empty cases
+      deps=$(echo "$deps" | sed 's/^[[:space:]]*//' | sed 's/[[:space:]]*$//')
+      [ -z "$deps" ] && deps=""
     else
       deps=""
     fi
