@@ -3,25 +3,25 @@
 ## Unix/Linux/macOS
 
 ```bash
-curl -sSL https://automaze.io/ccpm | bash
+curl -sSL https://automaze.io/ccpm/install | bash
 ```
 
 Or with wget:
 
 ```bash
-wget -qO- https://automaze.io/ccpm | bash
+wget -qO- https://automaze.io/ccpm/install | bash
 ```
 
 ## Windows (PowerShell)
 
 ```powershell
-iwr -useb https://automaze.io/ccpm | iex
+iwr -useb https://automaze.io/ccpm/install | iex
 ```
 
 Or download and execute:
 
 ```powershell
-curl -o ccpm.bat https://automaze.io/ccpm && ccpm.bat
+curl -o ccpm.bat https://automaze.io/ccpm/install && ccpm.bat
 ```
 
 ## One-liner alternatives
