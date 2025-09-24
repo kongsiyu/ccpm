@@ -104,6 +104,39 @@ if git rev-parse --git-dir > /dev/null 2>&1; then
       echo "  2. Update your remote:"
       echo "     git remote set-url origin https://github.com/YOUR_USERNAME/YOUR_REPO.git"
       echo ""
+    else
+      # Create GitHub labels if this is a GitHub repository
+      if gh repo view &> /dev/null; then
+        echo ""
+        echo "🏷️ Creating GitHub labels..."
+        
+        # Create base labels with improved error handling
+        epic_created=false
+        task_created=false
+        
+        if gh label create "epic" --color "0E8A16" --description "Epic issue containing multiple related tasks" --force 2>/dev/null; then
+          epic_created=true
+        elif gh label list 2>/dev/null | grep -q "^epic"; then
+          epic_created=true  # Label already exists
+        fi
+        
+        if gh label create "task" --color "1D76DB" --description "Individual task within an epic" --force 2>/dev/null; then
+          task_created=true
+        elif gh label list 2>/dev/null | grep -q "^task"; then
+          task_created=true  # Label already exists
+        fi
+        
+        # Report results
+        if $epic_created && $task_created; then
+          echo "  ✅ GitHub labels created (epic, task)"
+        elif $epic_created || $task_created; then
+          echo "  ⚠️ Some GitHub labels created (epic: $epic_created, task: $task_created)"
+        else
+          echo "  ❌ Could not create GitHub labels (check repository permissions)"
+        fi
+      else
+        echo "  ℹ️ Not a GitHub repository - skipping label creation"
+      fi
     fi
   else
     echo "  ⚠️ No remote configured"
