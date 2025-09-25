@@ -2,467 +2,222 @@
 allowed-tools: Bash, Read, Write, LS, Task
 ---
 
-# Epic Sync
+# Epic Sync 2.0 - Bidirectional Sync
 
-Push epic and tasks to GitHub as issues.
+Smart bidirectional epic sync that maintains perfect consistency between local files and GitHub issues.
 
 ## Usage
 ```
-/pm:epic-sync <feature_name>
+/pm:epic-sync2 <epic_name>
 ```
+
+## Overview
+
+This command implements a bidirectional sync that:
+- **Pulls from GitHub**: Fetches all epic/task issues and compares with local files
+- **Uses timestamps**: `updated` dates determine source of truth (local vs remote)
+- **Updates locally**: When GitHub issue is newer, updates local .md file
+- **Updates GitHub**: When local is newer, updates GitHub issue content and status
+- **Creates missing items**: GitHub issues → local files, or local files → GitHub issues
+- **Progress reporting**: Posts progress comments to GitHub issues
+- **Auto-closes**: Closes GitHub issues when locally marked as completed
 
 ## Quick Check
 
 ```bash
 # Verify epic exists
 test -f .claude/epics/$ARGUMENTS/epic.md || echo "❌ Epic not found. Run: /pm:prd-parse $ARGUMENTS"
-
-# Count task files
-ls .claude/epics/$ARGUMENTS/*.md 2>/dev/null | grep -v epic.md | wc -l
 ```
-
-If no tasks found: "❌ No tasks to sync. Run: /pm:epic-decompose $ARGUMENTS"
 
 ## Instructions
 
-### 0. Check Remote Repository
-
-Follow `/rules/github-operations.md` to ensure we're not syncing to the CCPM template:
+### 0. Repository Protection Check
 
 ```bash
 # Check if remote origin is the CCPM template repository
 remote_url=$(git remote get-url origin 2>/dev/null || echo "")
 if [[ "$remote_url" == *"automazeio/ccpm"* ]] || [[ "$remote_url" == *"automazeio/ccpm.git"* ]]; then
   echo "❌ ERROR: You're trying to sync with the CCPM template repository!"
+  echo "This repository is a template - you should NOT create issues here."
   echo ""
-  echo "This repository (automazeio/ccpm) is a template for others to use."
-  echo "You should NOT create issues or PRs here."
-  echo ""
-  echo "To fix this:"
-  echo "1. Fork this repository to your own GitHub account"
-  echo "2. Update your remote origin:"
-  echo "   git remote set-url origin https://github.com/YOUR_USERNAME/YOUR_REPO.git"
-  echo ""
-  echo "Or if this is a new project:"
-  echo "1. Create a new repository on GitHub"
-  echo "2. Update your remote origin:"
-  echo "   git remote set-url origin https://github.com/YOUR_USERNAME/YOUR_REPO.git"
-  echo ""
-  echo "Current remote: $remote_url"
+  echo "Please fork this repository or create your own project repository."
   exit 1
 fi
 ```
 
-### 1. Create Epic Issue
+### 1. Initialize Sync Environment
 
-#### First, detect the GitHub repository:
 ```bash
-# Get the current repository from git remote
+echo "🔄 Starting bidirectional epic sync for: $ARGUMENTS"
+
+# Get repository information
 remote_url=$(git remote get-url origin 2>/dev/null || echo "")
 REPO=$(echo "$remote_url" | sed 's|.*github.com[:/]||' | sed 's|\.git$||')
 [ -z "$REPO" ] && REPO="user/repo"
-echo "Creating issues in repository: $REPO"
-```
+echo "📍 Repository: $REPO"
 
-Strip frontmatter and prepare GitHub issue body:
-```bash
-# Extract content without frontmatter
-sed '1,/^---$/d; 1,/^---$/d' .claude/epics/$ARGUMENTS/epic.md > /tmp/epic-body-raw.md
-
-# Remove "## Tasks Created" section and replace with Stats
-awk '
-  /^## Tasks Created/ {
-    in_tasks=1
-    next
-  }
-  /^## / && in_tasks {
-    in_tasks=0
-    # When we hit the next section after Tasks Created, add Stats
-    if (total_tasks) {
-      print "## Stats"
-      print ""
-      print "Total tasks: " total_tasks
-      print "Parallel tasks: " parallel_tasks " (can be worked on simultaneously)"
-      print "Sequential tasks: " sequential_tasks " (have dependencies)"
-      if (total_effort) print "Estimated total effort: " total_effort " hours"
-      print ""
-    }
-  }
-  /^Total tasks:/ && in_tasks { total_tasks = $3; next }
-  /^Parallel tasks:/ && in_tasks { parallel_tasks = $3; next }
-  /^Sequential tasks:/ && in_tasks { sequential_tasks = $3; next }
-  /^Estimated total effort:/ && in_tasks {
-    gsub(/^Estimated total effort: /, "")
-    total_effort = $0
-    next
-  }
-  !in_tasks { print }
-  END {
-    # If we were still in tasks section at EOF, add stats
-    if (in_tasks && total_tasks) {
-      print "## Stats"
-      print ""
-      print "Total tasks: " total_tasks
-      print "Parallel tasks: " parallel_tasks " (can be worked on simultaneously)"
-      print "Sequential tasks: " sequential_tasks " (have dependencies)"
-      if (total_effort) print "Estimated total effort: " total_effort
-    }
-  }
-' /tmp/epic-body-raw.md > /tmp/epic-body.md
-
-# Determine epic type (feature vs bug) from content
-if grep -qi "bug\|fix\|issue\|problem\|error" /tmp/epic-body.md; then
-  epic_type="bug"
-else
-  epic_type="feature"
+# Verify GitHub CLI authentication
+if ! gh auth status &>/dev/null; then
+  echo "❌ GitHub CLI not authenticated. Run: gh auth login"
+  exit 1
 fi
 
-# Create epic issue with labels
-epic_number=$(gh issue create \
-  --repo "$REPO" \
-  --title "Epic: $ARGUMENTS" \
-  --body-file /tmp/epic-body.md \
-  --label "epic,epic:$ARGUMENTS,$epic_type" \
-  --json number -q .number)
-```
-
-Store the returned issue number for epic frontmatter update.
-
-### 2. Create Task Sub-Issues
-
-Check if gh-sub-issue is available:
-```bash
-if gh extension list | grep -q "yahsan2/gh-sub-issue"; then
+# Check for sub-issue extension
+if gh extension list 2>/dev/null | grep -q "yahsan2/gh-sub-issue"; then
   use_subissues=true
+  echo "🔧 Sub-issue extension available"
 else
   use_subissues=false
-  echo "⚠️ gh-sub-issue not installed. Using fallback mode."
+  echo "⚠️  Sub-issue extension not installed - using fallback mode"
 fi
 ```
 
-Count task files to determine strategy:
-```bash
-task_count=$(ls .claude/epics/$ARGUMENTS/[0-9][0-9][0-9].md 2>/dev/null | wc -l)
-```
+### 2. Fetch All GitHub Issues for Epic
 
-### For Small Batches (< 5 tasks): Sequential Creation
+Execute the GitHub issues fetcher:
 
 ```bash
-if [ "$task_count" -lt 5 ]; then
-  # Create sequentially for small batches
-  for task_file in .claude/epics/$ARGUMENTS/[0-9][0-9][0-9].md; do
-    [ -f "$task_file" ] || continue
-
-    # Extract task name from frontmatter
-    task_name=$(grep '^name:' "$task_file" | sed 's/^name: *//')
-
-    # Strip frontmatter from task content
-    sed '1,/^---$/d; 1,/^---$/d' "$task_file" > /tmp/task-body.md
-
-    # Create sub-issue with labels
-    if [ "$use_subissues" = true ]; then
-      task_number=$(gh sub-issue create \
-        --parent "$epic_number" \
-        --title "$task_name" \
-        --body-file /tmp/task-body.md \
-        --label "task,epic:$ARGUMENTS" \
-        --json number -q .number)
-    else
-      task_number=$(gh issue create \
-        --repo "$REPO" \
-        --title "$task_name" \
-        --body-file /tmp/task-body.md \
-        --label "task,epic:$ARGUMENTS" \
-        --json number -q .number)
-    fi
-
-    # Record mapping for renaming
-    echo "$task_file:$task_number" >> /tmp/task-mapping.txt
-  done
-
-  # After creating all issues, update references and rename files
-  # This follows the same process as step 3 below
-fi
+!bash ccpm/scripts/pm/epic-sync/fetch-github-issues.sh $ARGUMENTS "$REPO"
 ```
 
-### For Larger Batches: Parallel Creation
+### 3. Build Local File Inventory
+
+Build inventory of all local files with metadata:
 
 ```bash
-if [ "$task_count" -ge 5 ]; then
-  echo "Creating $task_count sub-issues in parallel..."
-
-  # Check if gh-sub-issue is available for parallel agents
-  if gh extension list | grep -q "yahsan2/gh-sub-issue"; then
-    subissue_cmd="gh sub-issue create --parent $epic_number"
-  else
-    subissue_cmd="gh issue create --repo \"$REPO\""
-  fi
-
-  # Batch tasks for parallel processing
-  # Spawn agents to create sub-issues in parallel with proper labels
-  # Each agent must use: --label "task,epic:$ARGUMENTS"
-fi
+!bash ccpm/scripts/pm/epic-sync/build-local-inventory.sh $ARGUMENTS
 ```
 
-Use Task tool for parallel creation:
-```yaml
-Task:
-  description: "Create GitHub sub-issues batch {X}"
-  subagent_type: "general-purpose"
-  prompt: |
-    Create GitHub sub-issues for tasks in epic $ARGUMENTS
-    Parent epic issue: #$epic_number
+### 4. Compare and Plan Sync Actions
 
-    Tasks to process:
-    - {list of 3-4 task files}
-
-    For each task file:
-    1. Extract task name from frontmatter
-    2. Strip frontmatter using: sed '1,/^---$/d; 1,/^---$/d'
-    3. Create sub-issue using:
-       - If gh-sub-issue available:
-         gh sub-issue create --parent $epic_number --title "$task_name" \
-           --body-file /tmp/task-body.md --label "task,epic:$ARGUMENTS"
-       - Otherwise: 
-         gh issue create --repo "$REPO" --title "$task_name" --body-file /tmp/task-body.md \
-           --label "task,epic:$ARGUMENTS"
-    4. Record: task_file:issue_number
-
-    IMPORTANT: Always include --label parameter with "task,epic:$ARGUMENTS"
-
-    Return mapping of files to issue numbers.
-```
-
-Consolidate results from parallel agents:
-```bash
-# Collect all mappings from agents
-cat /tmp/batch-*/mapping.txt >> /tmp/task-mapping.txt
-
-# IMPORTANT: After consolidation, follow step 3 to:
-# 1. Build old->new ID mapping
-# 2. Update all task references (depends_on, conflicts_with)
-# 3. Rename files with proper frontmatter updates
-```
-
-### 3. Rename Task Files and Update References
-
-First, build a mapping of old numbers to new issue IDs:
-```bash
-# Create mapping from old task numbers (001, 002, etc.) to new issue IDs
-> /tmp/id-mapping.txt
-while IFS=: read -r task_file task_number; do
-  # Extract old number from filename (e.g., 001 from 001.md)
-  old_num=$(basename "$task_file" .md)
-  echo "$old_num:$task_number" >> /tmp/id-mapping.txt
-done < /tmp/task-mapping.txt
-```
-
-Then rename files and update all references:
-```bash
-# Process each task file
-while IFS=: read -r task_file task_number; do
-  new_name="$(dirname "$task_file")/${task_number}.md"
-
-  # Read the file content
-  content=$(cat "$task_file")
-
-  # Update depends_on and conflicts_with references
-  while IFS=: read -r old_num new_num; do
-    # Update arrays like [001, 002] to use new issue numbers
-    content=$(echo "$content" | sed "s/\b$old_num\b/$new_num/g")
-  done < /tmp/id-mapping.txt
-
-  # Write updated content to new file
-  echo "$content" > "$new_name"
-
-  # Remove old file if different from new
-  [ "$task_file" != "$new_name" ] && rm "$task_file"
-
-  # Update github field in frontmatter
-  # Add the GitHub URL to the frontmatter
-  repo=$(gh repo view --json nameWithOwner -q .nameWithOwner)
-  github_url="https://github.com/$repo/issues/$task_number"
-
-  # Update frontmatter with GitHub URL and current timestamp
-  current_date=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-
-  # Use sed to update the github and updated fields
-  sed -i.bak "/^github:/c\github: $github_url" "$new_name"
-  sed -i.bak "/^updated:/c\updated: $current_date" "$new_name"
-  rm "${new_name}.bak"
-done < /tmp/task-mapping.txt
-```
-
-### 4. Update Epic with Task List (Fallback Only)
-
-If NOT using gh-sub-issue, add task list to epic:
+Analyze differences and plan sync actions:
 
 ```bash
-if [ "$use_subissues" = false ]; then
-  # Get current epic body
-  gh issue view ${epic_number} --json body -q .body > /tmp/epic-body.md
-
-  # Append task list
-  cat >> /tmp/epic-body.md << 'EOF'
-
-  ## Tasks
-  - [ ] #${task1_number} ${task1_name}
-  - [ ] #${task2_number} ${task2_name}
-  - [ ] #${task3_number} ${task3_name}
-  EOF
-
-  # Update epic issue
-  gh issue edit ${epic_number} --body-file /tmp/epic-body.md
-fi
+!bash ccpm/scripts/pm/epic-sync/plan-sync-actions.sh $ARGUMENTS
 ```
 
-With gh-sub-issue, this is automatic!
+### 5. Execute Sync Actions - Update Local Files
 
-### 5. Update Epic File
+Update local files from GitHub data:
 
-Update the epic file with GitHub URL, timestamp, and real task IDs:
-
-#### 5a. Update Frontmatter
 ```bash
-# Get repo info
+!bash ccpm/scripts/pm/epic-sync/sync-local-files.sh $ARGUMENTS
+```
+
+### 6. Execute Sync Actions - Update GitHub Issues
+
+Update GitHub issues from local data:
+
+```bash
+!bash ccpm/scripts/pm/epic-sync/sync-github-issues.sh $ARGUMENTS "$REPO" "$use_subissues"
+```
+
+### 7. Post Progress Reports and Manage Issue States
+
+Post progress comments and manage issue states:
+
+```bash
+!bash ccpm/scripts/pm/epic-sync/post-progress-reports.sh $ARGUMENTS
+```
+
+### 8. Create Worktree and Update Mappings
+
+Ensure worktree exists and update mapping file:
+
+```bash
+!bash ccpm/scripts/pm/epic-sync/worktree-and-mappings.sh $ARGUMENTS
+```
+
+### 9. Cleanup and Summary
+
+```bash
+# Get final stats from temp files
+epic_number=$(cat /tmp/epic-sync/epic-number.txt 2>/dev/null || echo "TBD")
+progress=$(cat /tmp/epic-sync/progress.txt 2>/dev/null || echo "0")
+total_tasks=$(cat /tmp/epic-sync/total-tasks.txt 2>/dev/null || echo "0")
+closed_tasks=$(cat /tmp/epic-sync/closed-tasks.txt 2>/dev/null || echo "0")
 repo=$(gh repo view --json nameWithOwner -q .nameWithOwner)
-epic_url="https://github.com/$repo/issues/$epic_number"
-current_date=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
-# Update epic frontmatter
-sed -i.bak "/^github:/c\github: $epic_url" .claude/epics/$ARGUMENTS/epic.md
-sed -i.bak "/^updated:/c\updated: $current_date" .claude/epics/$ARGUMENTS/epic.md
-rm .claude/epics/$ARGUMENTS/epic.md.bak
+echo ""
+echo "🎯 Bidirectional Epic Sync Complete: $ARGUMENTS"
+echo "=================================================="
+echo ""
+echo "📊 **Final Status:**"
+echo "   Epic: #${epic_number} ($progress% complete)"
+echo "   Tasks: $closed_tasks completed / $total_tasks total"
+echo ""
+echo "🔄 **Sync Summary:**"
+if [ -s /tmp/epic-sync/sync-actions.txt ]; then
+  updated_local=$(grep -c "^update_local:" /tmp/epic-sync/sync-actions.txt || echo 0)
+  updated_github=$(grep -c "^update_github:" /tmp/epic-sync/sync-actions.txt || echo 0)
+  created_local=$(grep -c "^create_local:" /tmp/epic-sync/sync-actions.txt || echo 0)
+  created_github=$(grep -c "^create_github:" /tmp/epic-sync/sync-actions.txt || echo 0)
+  
+  echo "   📥 Local files updated: $updated_local"
+  echo "   📤 GitHub issues updated: $updated_github"  
+  echo "   📁 Local files created: $created_local"
+  echo "   🆕 GitHub issues created: $created_github"
+else
+  echo "   ✅ Everything was already in perfect sync!"
+fi
+
+echo ""
+echo "🔗 **Links:**"
+echo "   Epic: https://github.com/${repo}/issues/${epic_number}"
+echo "   Mapping: .claude/epics/$ARGUMENTS/github-mapping.md"
+echo "   Worktree: ../epic-$ARGUMENTS"
+echo ""
+echo "🚀 **Next Steps:**"
+echo "   • Start development: /pm:epic-start $ARGUMENTS"
+echo "   • Work on specific task: /pm:issue-start <issue_number>"
+echo "   • Check progress: cat .claude/epics/$ARGUMENTS/github-mapping.md"
+
+# Cleanup temp files
+rm -rf /tmp/epic-sync/
+
+echo ""
+echo "✨ Bidirectional sync completed successfully!"
 ```
 
-#### 5b. Update Tasks Created Section
-```bash
-# Create a temporary file with the updated Tasks Created section
-cat > /tmp/tasks-section.md << 'EOF'
-## Tasks Created
-EOF
+## Key Features
 
-# Add each task with its real issue number
-for task_file in .claude/epics/$ARGUMENTS/[0-9]*.md; do
-  [ -f "$task_file" ] || continue
+### 🔄 **Bidirectional Sync**
+- **GitHub → Local**: Updates local .md files when GitHub issues are newer
+- **Local → GitHub**: Updates GitHub issues when local files are newer  
+- **Timestamp-based**: Uses `updated` fields to determine source of truth
 
-  # Get issue number (filename without .md)
-  issue_num=$(basename "$task_file" .md)
+### 🆕 **Orphan Handling**
+- **Missing Local**: Creates local .md files from GitHub issues
+- **Missing GitHub**: Creates GitHub issues from local .md files
+- **Smart Detection**: Handles deleted/missing issues gracefully
 
-  # Get task name from frontmatter
-  task_name=$(grep '^name:' "$task_file" | sed 's/^name: *//')
+### 📊 **Progress Management**
+- **Auto-close**: Closes GitHub issues when locally marked as completed
+- **Progress comments**: Posts regular sync updates to all issues
+- **Epic tracking**: Updates epic progress based on task completion
 
-  # Get parallel status
-  parallel=$(grep '^parallel:' "$task_file" | sed 's/^parallel: *//')
+### 🔧 **Advanced Features**
+- **Sub-issue support**: Uses gh-sub-issue extension when available
+- **Status sync**: Keeps GitHub issue state in sync with local status
+- **File renaming**: Renames local files to match GitHub issue numbers
+- **Worktree management**: Creates/maintains development worktrees
 
-  # Add to tasks section
-  echo "- [ ] #${issue_num} - ${task_name} (parallel: ${parallel})" >> /tmp/tasks-section.md
-done
+### ⚙️ **Modular Architecture**
+- **Focused Scripts**: Each sync step is a separate, testable script
+- **Reusable Components**: Scripts can be used independently or by other commands
+- **Clear Separation**: Logic flow in markdown, implementation in scripts
+- **Easy Maintenance**: Scripts have proper syntax highlighting and debugging
 
-# Add summary statistics
-total_count=$(ls .claude/epics/$ARGUMENTS/[0-9]*.md 2>/dev/null | wc -l)
-parallel_count=$(grep -l '^parallel: true' .claude/epics/$ARGUMENTS/[0-9]*.md 2>/dev/null | wc -l)
-sequential_count=$((total_count - parallel_count))
+## Script Components
 
-cat >> /tmp/tasks-section.md << EOF
+The sync process is powered by these modular scripts:
 
-Total tasks: ${total_count}
-Parallel tasks: ${parallel_count}
-Sequential tasks: ${sequential_count}
-EOF
+- **`fetch-github-issues.sh`** - Fetches all GitHub issues for the epic
+- **`build-local-inventory.sh`** - Builds inventory of local files with metadata
+- **`plan-sync-actions.sh`** - Compares timestamps and plans sync actions
+- **`sync-local-files.sh`** - Updates local files from GitHub data
+- **`sync-github-issues.sh`** - Updates GitHub issues from local data  
+- **`post-progress-reports.sh`** - Posts progress comments and manages issue states
+- **`worktree-and-mappings.sh`** - Creates worktrees and updates mapping files
 
-# Replace the Tasks Created section in epic.md
-# First, create a backup
-cp .claude/epics/$ARGUMENTS/epic.md .claude/epics/$ARGUMENTS/epic.md.backup
-
-# Use awk to replace the section
-awk '
-  /^## Tasks Created/ {
-    skip=1
-    while ((getline line < "/tmp/tasks-section.md") > 0) print line
-    close("/tmp/tasks-section.md")
-  }
-  /^## / && !/^## Tasks Created/ { skip=0 }
-  !skip && !/^## Tasks Created/ { print }
-' .claude/epics/$ARGUMENTS/epic.md.backup > .claude/epics/$ARGUMENTS/epic.md
-
-# Clean up
-rm .claude/epics/$ARGUMENTS/epic.md.backup
-rm /tmp/tasks-section.md
-```
-
-### 6. Create Mapping File
-
-Create `.claude/epics/$ARGUMENTS/github-mapping.md`:
-```bash
-# Create mapping file
-cat > .claude/epics/$ARGUMENTS/github-mapping.md << EOF
-# GitHub Issue Mapping
-
-Epic: #${epic_number} - https://github.com/${repo}/issues/${epic_number}
-
-Tasks:
-EOF
-
-# Add each task mapping
-for task_file in .claude/epics/$ARGUMENTS/[0-9]*.md; do
-  [ -f "$task_file" ] || continue
-
-  issue_num=$(basename "$task_file" .md)
-  task_name=$(grep '^name:' "$task_file" | sed 's/^name: *//')
-
-  echo "- #${issue_num}: ${task_name} - https://github.com/${repo}/issues/${issue_num}" >> .claude/epics/$ARGUMENTS/github-mapping.md
-done
-
-# Add sync timestamp
-echo "" >> .claude/epics/$ARGUMENTS/github-mapping.md
-echo "Synced: $(date -u +"%Y-%m-%dT%H:%M:%SZ")" >> .claude/epics/$ARGUMENTS/github-mapping.md
-```
-
-### 7. Create Worktree
-
-Follow `/rules/worktree-operations.md` to create development worktree:
-
-```bash
-# Ensure main is current
-git checkout main
-git pull origin main
-
-# Create worktree for epic
-git worktree add ../epic-$ARGUMENTS -b epic/$ARGUMENTS
-
-echo "✅ Created worktree: ../epic-$ARGUMENTS"
-```
-
-### 8. Output
-
-```
-✅ Synced to GitHub
-  - Epic: #{epic_number} - {epic_title}
-  - Tasks: {count} sub-issues created
-  - Labels applied: epic, task, epic:{name}
-  - Files renamed: 001.md → {issue_id}.md
-  - References updated: depends_on/conflicts_with now use issue IDs
-  - Worktree: ../epic-$ARGUMENTS
-
-Next steps:
-  - Start parallel execution: /pm:epic-start $ARGUMENTS
-  - Or work on single issue: /pm:issue-start {issue_number}
-  - View epic: https://github.com/{owner}/{repo}/issues/{epic_number}
-```
-
-## Error Handling
-
-Follow `/rules/github-operations.md` for GitHub CLI errors.
-
-If any issue creation fails:
-- Report what succeeded
-- Note what failed
-- Don't attempt rollback (partial sync is fine)
-
-## Important Notes
-
-- Trust GitHub CLI authentication
-- Don't pre-check for duplicates
-- Update frontmatter only after successful creation
-- Keep operations simple and atomic
+This replaces both `epic-sync.md` and `epic-refresh.md` with a single, comprehensive bidirectional sync command.

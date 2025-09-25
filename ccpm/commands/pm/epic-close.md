@@ -1,5 +1,5 @@
 ---
-allowed-tools: Bash, Read, Write, LS
+allowed-tools: Bash
 ---
 
 # Epic Close
@@ -8,62 +8,41 @@ Mark an epic as complete when all tasks are done.
 
 ## Usage
 ```
-/pm:epic-close <epic_name>
+/pm:epic-close <epic_name> [--archive]
 ```
+
+Options:
+- `--archive` - Automatically archive epic after closing
 
 ## Instructions
 
-### 1. Verify All Tasks Complete
+Close the epic using the epic management script:
 
-Check all task files in `.claude/epics/$ARGUMENTS/`:
-- Verify all have `status: closed` in frontmatter
-- If any open tasks found: "❌ Cannot close epic. Open tasks remain: {list}"
-
-### 2. Update Epic Status
-
-Get current datetime: `date -u +"%Y-%m-%dT%H:%M:%SZ"`
-
-Update epic.md frontmatter:
-```yaml
-status: completed
-progress: 100%
-updated: {current_datetime}
-completed: {current_datetime}
-```
-
-### 3. Update PRD Status
-
-If epic references a PRD, update its status to "complete".
-
-### 4. Close Epic on GitHub
-
-If epic has GitHub issue:
 ```bash
-gh issue close {epic_issue_number} --comment "✅ Epic completed - all tasks done"
+bash ccpm/scripts/pm/close-epic.sh close $ARGUMENTS
 ```
 
-### 5. Archive Option
+The script will:
+1. Verify all tasks in the epic are closed (exits with error if not)
+2. Update epic status to completed with 100% progress and completion timestamp
+3. Update linked PRD status to complete (if referenced)
+4. Close the epic issue on GitHub with completion comment
+5. Calculate and display epic duration
+6. Offer to archive the completed epic (or auto-archive with --archive flag)
+7. Create detailed archive summary if archived
 
-Ask user: "Archive completed epic? (yes/no)"
+## Alternative: Reopen Epic
 
-If yes:
-- Move epic directory to `.claude/epics/.archived/{epic_name}/`
-- Create archive summary with completion date
+To reopen a closed epic for additional work:
 
-### 6. Output
-
-```
-✅ Epic closed: $ARGUMENTS
-  Tasks completed: {count}
-  Duration: {days_from_created_to_completed}
-  
-{If archived}: Archived to .claude/epics/.archived/
-
-Next epic: Run /pm:next to see priority work
+```bash
+bash ccpm/scripts/pm/close-epic.sh reopen $ARGUMENTS
 ```
 
 ## Important Notes
 
-Only close epics with all tasks complete.
-Preserve all data when archiving.
-Update related PRD status.
+- Only closes epics when all tasks are complete
+- Automatically updates linked PRD status  
+- Preserves all data when archiving
+- Creates detailed completion and archive logs
+- Can unarchive and reopen epics if needed

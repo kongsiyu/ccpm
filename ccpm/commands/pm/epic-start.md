@@ -13,25 +13,10 @@ Launch parallel agents to work on epic tasks in a shared branch.
 
 ## Quick Check
 
-1. **Verify epic exists:**
-   ```bash
-   test -f .claude/epics/$ARGUMENTS/epic.md || echo "❌ Epic not found. Run: /pm:prd-parse $ARGUMENTS"
-   ```
-
-2. **Check GitHub sync:**
-   Look for `github:` field in epic frontmatter.
-   If missing: "❌ Epic not synced. Run: /pm:epic-sync $ARGUMENTS first"
-
-3. **Check for branch:**
-   ```bash
-   git branch -a | grep "epic/$ARGUMENTS"
-   ```
-
-4. **Check for uncommitted changes:**
-   ```bash
-   git status --porcelain
-   ```
-   If output is not empty: "❌ You have uncommitted changes. Please commit or stash them before starting an epic"
+Run preflight checks:
+```bash
+!bash ccpm/scripts/pm/epic-start/preflight-checks.sh "$ARGUMENTS"
+```
 
 ## Instructions
 
@@ -40,24 +25,7 @@ Launch parallel agents to work on epic tasks in a shared branch.
 Follow `/rules/branch-operations.md`:
 
 ```bash
-# Check for uncommitted changes
-if [ -n "$(git status --porcelain)" ]; then
-  echo "❌ You have uncommitted changes. Please commit or stash them before starting an epic."
-  exit 1
-fi
-
-# If branch doesn't exist, create it
-if ! git branch -a | grep -q "epic/$ARGUMENTS"; then
-  git checkout main
-  git pull origin main
-  git checkout -b epic/$ARGUMENTS
-  git push -u origin epic/$ARGUMENTS
-  echo "✅ Created branch: epic/$ARGUMENTS"
-else
-  git checkout epic/$ARGUMENTS
-  git pull origin epic/$ARGUMENTS
-  echo "✅ Using existing branch: epic/$ARGUMENTS"
-fi
+!bash ccpm/scripts/pm/epic-start/manage-branch.sh "$ARGUMENTS"
 ```
 
 ### 2. Identify Ready Issues
@@ -77,11 +45,8 @@ Categorize issues:
 
 For each ready issue without analysis:
 ```bash
-# Check for analysis
-if ! test -f .claude/epics/$ARGUMENTS/{issue}-analysis.md; then
-  echo "Analyzing issue #{issue}..."
-  # Run analysis (inline or via Task tool)
-fi
+# Check for analysis (replace {issue} with actual issue number)
+!bash ccpm/scripts/pm/epic-start/check-analysis.sh "$ARGUMENTS" "{issue}"
 ```
 
 ### 4. Launch Parallel Agents
@@ -128,48 +93,16 @@ Task:
 
 ### 5. Track Active Agents
 
-Create/update `.claude/epics/$ARGUMENTS/execution-status.md`:
-
-```markdown
----
-started: {datetime}
-branch: epic/$ARGUMENTS
----
-
-# Execution Status
-
-## Active Agents
-- Agent-1: Issue #1234 Stream A (Database) - Started {time}
-- Agent-2: Issue #1234 Stream B (API) - Started {time}
-- Agent-3: Issue #1235 Stream A (UI) - Started {time}
-
-## Queued Issues
-- Issue #1236 - Waiting for #1234
-- Issue #1237 - Waiting for #1235
-
-## Completed
-- {None yet}
+Create/update execution status file:
+```bash
+!bash ccpm/scripts/pm/epic-start/create-execution-status.sh "$ARGUMENTS"
 ```
 
 ### 6. Monitor and Coordinate
 
 Set up monitoring:
 ```bash
-echo "
-Agents launched successfully!
-
-Monitor progress:
-  /pm:epic-status $ARGUMENTS
-
-View branch changes:
-  git status
-
-Stop all agents:
-  /pm:epic-stop $ARGUMENTS
-
-Merge when complete:
-  /pm:epic-merge $ARGUMENTS
-"
+!bash ccpm/scripts/pm/epic-start/setup-monitoring.sh "$ARGUMENTS"
 ```
 
 ### 7. Handle Dependencies

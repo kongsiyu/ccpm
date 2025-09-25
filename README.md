@@ -215,13 +215,12 @@ Specialized agents implement tasks while maintaining progress updates and an aud
 
 ### Epic Commands
 - `/pm:epic-decompose` - Break epic into task files
-- `/pm:epic-sync` - Push epic and tasks to GitHub
+- `/pm:epic-sync` - Bidirectional sync between local epics/tasks and GitHub issues
 - `/pm:epic-oneshot` - Decompose and sync in one command
 - `/pm:epic-list` - List all epics
 - `/pm:epic-show` - Display epic and its tasks
 - `/pm:epic-close` - Mark epic as complete
 - `/pm:epic-edit` - Edit epic details
-- `/pm:epic-refresh` - Update epic progress from tasks
 
 ### Issue Commands
 - `/pm:issue-show` - Display issue and sub-issues
