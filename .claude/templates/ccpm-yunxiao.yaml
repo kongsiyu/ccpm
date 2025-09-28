@@ -1,0 +1,98 @@
+# CCPM 云效平台配置模板
+# Cloud Code Project Management - Yunxiao Platform Configuration Template
+#
+# 此模板用于配置 CCPM 使用阿里云云效作为项目管理平台
+
+# 平台配置 - Platform Configuration
+platform:
+  # 平台类型：阿里云云效
+  type: "yunxiao"
+
+  # 项目标识符（必需）
+  # 在云效控制台中找到你的项目ID
+  project_id: "your-project-id"
+
+  # 云效特定配置
+  yunxiao:
+    # 云效API配置
+    api:
+      base_url: "https://devops.aliyun.com"
+      version: "v4"
+      timeout: 30000  # 30秒超时
+
+    # 访问令牌环境变量名
+    token_env: "YUNXIAO_ACCESS_TOKEN"
+
+    # 工作项类型映射偏好
+    workitem_types:
+      default_task_type: "任务"      # 默认任务类型
+      default_epic_type: "需求"      # 默认史诗类型
+      default_bug_type: "缺陷"       # 默认缺陷类型
+
+# 同步配置 - Synchronization Configuration
+sync:
+  # 双向同步：支持本地 ↔ 云效双向同步
+  mode: "bidirectional"
+
+  # 同步间隔（秒，0表示禁用自动同步）
+  interval: 0
+
+  # 同步超时（秒）
+  timeout: 60
+
+  # 冲突处理策略
+  conflict_resolution:
+    # "timestamp": 最新修改时间优先
+    # "manual": 手动解决冲突
+    # "local_wins": 本地优先
+    # "remote_wins": 远程优先
+    strategy: "timestamp"
+
+# 功能开关 - Feature Toggles
+features:
+  # 详细日志：用于调试云效API交互
+  verbose_logging: true
+
+  # 严格验证：验证云效工作项映射
+  strict_validation: true
+
+  # 向后兼容：与现有系统共存
+  legacy_compatibility: true
+
+  # 自动备份：推荐启用
+  auto_backup: true
+
+# 模板配置 - Template Configuration
+templates:
+  task_template: ".claude/templates/task.md"
+  epic_template: ".claude/templates/epic.md"
+  sync_log_template: ".claude/templates/sync-log.md"
+
+# 路径配置 - Path Configuration
+paths:
+  epics_dir: ".claude/epics"
+  rules_dir: ".claude/rules"
+  logs_dir: ".claude/logs"
+  backup_dir: ".claude/backups"
+
+# 配置元信息 - Metadata
+metadata:
+  version: "1.0.0"
+  created: "2025-09-28T07:59:05Z"
+  updated: "2025-09-28T07:59:05Z"
+  description: "CCPM 云效平台配置模板 - 适用于使用阿里云云效工作项进行项目管理"
+
+# 使用说明 - Usage Instructions
+#
+# 1. 设置访问令牌:
+#    export YUNXIAO_ACCESS_TOKEN="your-access-token"
+#
+# 2. 配置项目ID:
+#    将 "your-project-id" 替换为实际的云效项目ID
+#
+# 3. 验证配置:
+#    yq eval '.' .claude/ccpm.yaml
+#
+# 4. 测试连接:
+#    curl -H "Authorization: Bearer $YUNXIAO_ACCESS_TOKEN" \
+#         https://devops.aliyun.com/api/v4/projects/your-project-id

@@ -1,0 +1,110 @@
+# CCPM 平台配置文件
+# Cloud Code Project Management - Platform Configuration
+#
+# 此文件定义项目管理平台选择和相关配置参数
+# 支持 GitHub 和阿里云云效 (Yunxiao) 两个平台
+
+# 平台配置 - Platform Configuration
+platform:
+  # 平台类型 - Platform Type
+  # 可选值: "github" | "yunxiao"
+  # github: 使用 GitHub Issues 和 Projects 进行项目管理
+  # yunxiao: 使用阿里云云效工作项进行项目管理
+  type: "github"
+
+  # 项目标识符 - Project Identifier
+  # GitHub模式: 可选，将自动从 git remote 检测
+  # Yunxiao模式: 必需，云效项目 ID
+  project_id: ""
+
+  # 平台特定配置 - Platform Specific Configuration
+  github:
+    # GitHub 仓库配置（可选，通常自动检测）
+    repository: ""  # 格式: "owner/repo"
+
+    # GitHub API 配置
+    api:
+      base_url: "https://api.github.com"
+      timeout: 30000  # 毫秒
+
+  yunxiao:
+    # 云效平台配置
+    api:
+      base_url: "https://devops.aliyun.com"
+      version: "v4"
+      timeout: 30000  # 毫秒
+
+    # 访问令牌环境变量名
+    token_env: "YUNXIAO_ACCESS_TOKEN"
+
+    # 工作项类型映射偏好
+    workitem_types:
+      default_task_type: "任务"      # 默认任务类型
+      default_epic_type: "需求"      # 默认史诗类型
+      default_bug_type: "缺陷"       # 默认缺陷类型
+
+# 同步配置 - Synchronization Configuration
+sync:
+  # 同步模式 - Sync Mode
+  # "bidirectional": 双向同步
+  # "pull_only": 仅从平台拉取
+  # "push_only": 仅推送到平台
+  mode: "bidirectional"
+
+  # 同步频率和超时配置
+  interval: 300    # 秒，自动同步间隔（0表示禁用自动同步）
+  timeout: 60      # 秒，单次同步操作超时
+
+  # 冲突处理策略
+  conflict_resolution:
+    # "manual": 手动解决冲突
+    # "local_wins": 本地优先
+    # "remote_wins": 远程优先
+    # "timestamp": 最新修改时间优先
+    strategy: "timestamp"
+
+# 功能开关 - Feature Toggles
+features:
+  # 启用详细日志输出
+  verbose_logging: false
+
+  # 启用配置验证
+  strict_validation: true
+
+  # 启用向后兼容模式（与现有 bash 配置共存）
+  legacy_compatibility: true
+
+  # 启用自动备份
+  auto_backup: true
+
+# 模板配置 - Template Configuration
+templates:
+  # 任务模板路径
+  task_template: ".claude/templates/task.md"
+
+  # 史诗模板路径
+  epic_template: ".claude/templates/epic.md"
+
+  # 同步日志模板
+  sync_log_template: ".claude/templates/sync-log.md"
+
+# 路径配置 - Path Configuration
+paths:
+  # 史诗文件存储路径
+  epics_dir: ".claude/epics"
+
+  # 规则文件存储路径
+  rules_dir: ".claude/rules"
+
+  # 日志文件存储路径
+  logs_dir: ".claude/logs"
+
+  # 备份文件存储路径
+  backup_dir: ".claude/backups"
+
+# 配置文件元信息 - Configuration Metadata
+metadata:
+  version: "1.0.0"
+  created: "2025-09-28T07:59:05Z"
+  updated: "2025-09-28T07:59:05Z"
+  description: "CCPM 平台配置 - 支持 GitHub 和云效平台的项目管理工具配置"

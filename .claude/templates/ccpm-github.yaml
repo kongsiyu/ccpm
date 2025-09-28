@@ -1,0 +1,71 @@
+# CCPM GitHub 平台配置模板
+# Cloud Code Project Management - GitHub Platform Configuration Template
+#
+# 此模板用于配置 CCPM 使用 GitHub 作为项目管理平台
+
+# 平台配置 - Platform Configuration
+platform:
+  # 平台类型：GitHub
+  type: "github"
+
+  # 项目标识符（可选，通常自动检测）
+  project_id: ""
+
+  # GitHub 特定配置
+  github:
+    # 仓库配置（可选，自动从 git remote 检测）
+    repository: ""  # 格式: "owner/repo"
+
+    # GitHub API 配置
+    api:
+      base_url: "https://api.github.com"
+      timeout: 30000  # 30秒超时
+
+# 同步配置 - Synchronization Configuration
+sync:
+  # 双向同步：支持本地 ↔ GitHub 双向同步
+  mode: "bidirectional"
+
+  # 同步间隔（秒，0表示禁用自动同步）
+  interval: 0
+
+  # 同步超时（秒）
+  timeout: 60
+
+  # 冲突处理：使用时间戳优先策略
+  conflict_resolution:
+    strategy: "timestamp"
+
+# 功能开关 - Feature Toggles
+features:
+  # 详细日志：开发调试时启用
+  verbose_logging: false
+
+  # 严格验证：推荐启用
+  strict_validation: true
+
+  # 向后兼容：与现有 bash 配置共存
+  legacy_compatibility: true
+
+  # 自动备份：推荐启用
+  auto_backup: true
+
+# 模板配置 - Template Configuration
+templates:
+  task_template: ".claude/templates/task.md"
+  epic_template: ".claude/templates/epic.md"
+  sync_log_template: ".claude/templates/sync-log.md"
+
+# 路径配置 - Path Configuration
+paths:
+  epics_dir: ".claude/epics"
+  rules_dir: ".claude/rules"
+  logs_dir: ".claude/logs"
+  backup_dir: ".claude/backups"
+
+# 配置元信息 - Metadata
+metadata:
+  version: "1.0.0"
+  created: "2025-09-28T07:59:05Z"
+  updated: "2025-09-28T07:59:05Z"
+  description: "CCPM GitHub 平台配置模板 - 适用于使用 GitHub Issues 进行项目管理"
