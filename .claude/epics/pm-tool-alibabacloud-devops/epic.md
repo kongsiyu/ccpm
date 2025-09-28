@@ -4,7 +4,7 @@ status: backlog
 created: 2025-09-28T07:52:39Z
 progress: 0%
 prd: .claude/prds/pm-tool-alibabacloud-devops.md
-github: [Will be updated when synced to GitHub]
+github: https://github.com/kongsiyu/ccpm/issues/1
 ---
 
 # Epic: CCPM 阿里云云效平台集成
@@ -143,14 +143,14 @@ Issue Status      ↔ WorkItem State
 
 ## Tasks Created
 
-- [ ] 001.md - 配置系统和平台检测（含命令路由） (parallel: true)
-- [ ] 002.md - 平台适配器框架 (parallel: false)
-- [ ] 003.md - MCP集成和云效连接 (parallel: false)
-- [ ] 004.md - 初始化命令增强 (parallel: false)
-- [ ] 005.md - 端到端测试和验证 (parallel: false)
+- [ ] #2 - 配置系统和平台检测（含命令路由） (parallel: true)
+- [ ] #3 - 平台适配器框架 (parallel: false)
+- [ ] #4 - MCP集成和云效连接 (parallel: false)
+- [ ] #5 - 初始化命令增强 (parallel: false)
+- [ ] #6 - 端到端测试和验证 (parallel: false)
 
 Total tasks: 5
-Parallel tasks: 1 (001 can start immediately)
+Parallel tasks: 1 (2 can start immediately)
 Sequential tasks: 4 (form dependency chain)
 Estimated total effort: 45+ hours (5-7 working days)
 
