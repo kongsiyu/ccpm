@@ -11,6 +11,88 @@ Push local updates as GitHub issue comments for transparent audit trail.
 /pm:issue-sync <issue_number>
 ```
 
+## Platform Detection and Routing
+
+### Step 1: Detect Platform Configuration
+```bash
+# Initialize platform variables with defaults for backward compatibility
+PLATFORM_TYPE="github"
+PLATFORM_PROJECT_ID=""
+
+# Method 1: Check for YAML configuration (future format)
+if [ -f ".claude/ccpm.config" ] && command -v yq >/dev/null 2>&1; then
+  # Try YAML format first
+  platform_type_yaml=$(yq eval '.platform.type' .claude/ccpm.config 2>/dev/null)
+  if [ "$platform_type_yaml" != "null" ] && [ -n "$platform_type_yaml" ]; then
+    PLATFORM_TYPE="$platform_type_yaml"
+    PLATFORM_PROJECT_ID=$(yq eval '.platform.project_id' .claude/ccpm.config 2>/dev/null)
+  fi
+fi
+
+# Method 2: Check for bash configuration (current format)
+if [ "$PLATFORM_TYPE" = "github" ] && [ -f ".claude/ccpm.config" ]; then
+  # Source the bash configuration if YAML parsing failed or yq not available
+  if grep -q "GITHUB_REPO=" .claude/ccpm.config 2>/dev/null; then
+    echo "Using existing GitHub configuration from .claude/ccpm.config"
+    # Configuration exists but is GitHub-focused, continue with GitHub
+  fi
+fi
+
+# Method 3: Environment variable override
+if [ -n "$CCPM_PLATFORM_TYPE" ]; then
+  PLATFORM_TYPE="$CCPM_PLATFORM_TYPE"
+fi
+
+if [ -n "$CCPM_PROJECT_ID" ]; then
+  PLATFORM_PROJECT_ID="$CCPM_PROJECT_ID"
+fi
+
+echo "Detected platform: $PLATFORM_TYPE"
+```
+
+### Step 2: Load Platform-specific Rules
+```bash
+# Load platform-specific issue sync rules if available
+case "$PLATFORM_TYPE" in
+  "yunxiao"|"alicloud")
+    if [ -f ".claude/rules/platform-yunxiao-issue.md" ]; then
+      echo "Loading Yunxiao platform issue sync rules..."
+      # Platform-specific logic will be implemented through rule files
+      # This preserves existing GitHub logic while enabling cloud platform support
+    else
+      echo "Warning: Yunxiao platform selected but issue rules not found. Falling back to GitHub."
+      PLATFORM_TYPE="github"
+    fi
+    ;;
+  "github"|*)
+    echo "Using GitHub issue sync logic (default)"
+    ;;
+esac
+```
+
+### Step 3: Platform-specific Initialization
+```bash
+# Initialize platform-specific variables and tools
+if [ "$PLATFORM_TYPE" = "yunxiao" ] || [ "$PLATFORM_TYPE" = "alicloud" ]; then
+  # Yunxiao platform initialization
+  if [ -z "$PLATFORM_PROJECT_ID" ]; then
+    echo "❌ Error: project_id required for Yunxiao platform"
+    echo "Please configure in .claude/ccpm.config:"
+    echo "platform:"
+    echo "  type: yunxiao"
+    echo "  project_id: your-project-id"
+    exit 1
+  fi
+
+  echo "Initializing Yunxiao issue sync for project: $PLATFORM_PROJECT_ID"
+
+  # TODO: Load Yunxiao-specific issue update logic from rule files
+  # For now, show that routing works and fall back to GitHub
+  echo "⚠️ Yunxiao issue sync not yet implemented. Falling back to GitHub for now."
+  PLATFORM_TYPE="github"
+fi
+```
+
 ## Required Rules
 
 **IMPORTANT:** Before executing this command, read and follow:
