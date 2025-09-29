@@ -21,36 +21,12 @@ Push local updates as GitHub issue comments for transparent audit trail.
 Before proceeding, complete these validation steps.
 Do not bother the user with preflight checks progress ("I'm not going to ..."). Just do them and move on.
 
-0. **Repository Protection Check:**
-   Follow `/rules/github-operations.md` - check remote origin:
-   ```bash
-   remote_url=$(git remote get-url origin 2>/dev/null || echo "")
-   if [[ "$remote_url" == *"automazeio/ccpm"* ]]; then
-     echo "❌ ERROR: Cannot sync to CCPM template repository!"
-     echo "Update your remote: git remote set-url origin https://github.com/YOUR_USERNAME/YOUR_REPO.git"
-     exit 1
-   fi
-   ```
-
-1. **GitHub Authentication:**
-   - Run: `gh auth status`
-   - If not authenticated, tell user: "❌ GitHub CLI not authenticated. Run: gh auth login"
-
-2. **Issue Validation:**
-   - Run: `gh issue view $ARGUMENTS --json state`
-   - If issue doesn't exist, tell user: "❌ Issue #$ARGUMENTS not found"
-   - If issue is closed and completion < 100%, warn: "⚠️ Issue is closed but work incomplete"
-
-3. **Local Updates Check:**
-   - Check if `.claude/epics/*/updates/$ARGUMENTS/` directory exists
-   - If not found, tell user: "❌ No local updates found for issue #$ARGUMENTS. Run: /pm:issue-start $ARGUMENTS"
-   - Check if progress.md exists
-   - If not, tell user: "❌ No progress tracking found. Initialize with: /pm:issue-start $ARGUMENTS"
-
-4. **Check Last Sync:**
-   - Read `last_sync` from progress.md frontmatter
-   - If synced recently (< 5 minutes), ask: "⚠️ Recently synced. Force sync anyway? (yes/no)"
-   - Calculate what's new since last sync
+Run preflight checks:
+```bash
+!bash ccpm/scripts/pm/issue-sync/check-repo-protection.sh
+!bash ccpm/scripts/pm/issue-sync/preflight-validation.sh "$ARGUMENTS"
+!bash ccpm/scripts/pm/issue-sync/check-sync-timing.sh "$ARGUMENTS"
+```
 
 5. **Verify Changes:**
    - Check if there are actual updates to sync
@@ -126,21 +102,13 @@ Create comprehensive update comment:
 ### 5. Post to GitHub
 Use GitHub CLI to add comment:
 ```bash
-gh issue comment #$ARGUMENTS --body-file {temp_comment_file}
+!bash ccpm/scripts/pm/issue-sync/post-comment.sh "$ARGUMENTS" "{temp_comment_file}"
 ```
 
 ### 6. Update Local Task File
-Get current datetime: `date -u +"%Y-%m-%dT%H:%M:%SZ"`
-
-Update the task file frontmatter with sync information:
-```yaml
----
-name: [Task Title]
-status: open
-created: [preserve existing date]
-updated: [Use REAL datetime from command above]
-github: https://github.com/{org}/{repo}/issues/$ARGUMENTS
----
+Update frontmatter with sync information:
+```bash
+!bash ccpm/scripts/pm/issue-sync/update-frontmatter.sh "$ARGUMENTS" "{completion_percentage}"
 ```
 
 ### 7. Handle Completion
@@ -274,12 +242,10 @@ This task is ready for review and can be closed.
 
 ### 14. Epic Progress Calculation
 
-When updating epic progress:
-1. Count total tasks in epic directory
-2. Count tasks with `status: closed` in frontmatter
-3. Calculate: `progress = (closed_tasks / total_tasks) * 100`
-4. Round to nearest integer
-5. Update epic frontmatter only if percentage changed
+When updating epic progress (replace {epic_name} with actual epic):
+```bash
+!bash ccpm/scripts/pm/issue-sync/calculate-epic-progress.sh "{epic_name}"
+```
 
 ### 15. Post-Sync Validation
 

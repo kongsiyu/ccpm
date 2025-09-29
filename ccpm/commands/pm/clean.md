@@ -1,5 +1,5 @@
 ---
-allowed-tools: Bash, Read, Write, LS
+allowed-tools: Bash
 ---
 
 # Clean
@@ -8,95 +8,34 @@ Clean up completed work and archive old epics.
 
 ## Usage
 ```
-/pm:clean [--dry-run]
+/pm:clean [--dry-run] [--verbose]
 ```
 
 Options:
 - `--dry-run` - Show what would be cleaned without doing it
+- `--verbose` - Show detailed output during cleanup
 
 ## Instructions
 
-### 1. Identify Completed Epics
+Run the system cleanup script:
 
-Find epics with:
-- `status: completed` in frontmatter
-- All tasks closed
-- Last update > 30 days ago
-
-### 2. Identify Stale Work
-
-Find:
-- Progress files for closed issues
-- Update directories for completed work
-- Orphaned task files (epic deleted)
-- Empty directories
-
-### 3. Show Cleanup Plan
-
-```
-🧹 Cleanup Plan
-
-Completed Epics to Archive:
-  {epic_name} - Completed {days} days ago
-  {epic_name} - Completed {days} days ago
-  
-Stale Progress to Remove:
-  {count} progress files for closed issues
-  
-Empty Directories:
-  {list_of_empty_dirs}
-  
-Space to Recover: ~{size}KB
-
-{If --dry-run}: This is a dry run. No changes made.
-{Otherwise}: Proceed with cleanup? (yes/no)
-```
-
-### 4. Execute Cleanup
-
-If user confirms:
-
-**Archive Epics:**
 ```bash
-mkdir -p .claude/epics/.archived
-mv .claude/epics/{completed_epic} .claude/epics/.archived/
+bash ccpm/scripts/pm/clean.sh $ARGUMENTS
 ```
 
-**Remove Stale Files:**
-- Delete progress files for closed issues > 30 days
-- Remove empty update directories
-- Clean up orphaned files
-
-**Create Archive Log:**
-Create `.claude/epics/.archived/archive-log.md`:
-```markdown
-# Archive Log
-
-## {current_date}
-- Archived: {epic_name} (completed {date})
-- Removed: {count} stale progress files
-- Cleaned: {count} empty directories
-```
-
-### 5. Output
-
-```
-✅ Cleanup Complete
-
-Archived:
-  {count} completed epics
-  
-Removed:
-  {count} stale files
-  {count} empty directories
-  
-Space recovered: {size}KB
-
-System is clean and organized.
-```
+The cleanup script will:
+1. Scan for completed epics (status: completed, all tasks closed, >30 days old)
+2. Find stale progress files for closed issues  
+3. Identify empty directories
+4. Show cleanup plan and ask for confirmation
+5. Archive completed epics to `.claude/epics/.archived/`
+6. Remove stale files and empty directories
+7. Create detailed archive log
+8. Report space recovered
 
 ## Important Notes
 
-Always offer --dry-run to preview changes.
-Never delete PRDs or incomplete work.
-Keep archive log for history.
+- Always previews changes before making them
+- Never deletes PRDs or incomplete work  
+- Maintains complete archive log for history
+- Can be run safely with `--dry-run` to preview changes
