@@ -192,7 +192,8 @@ if [ -f "$YAML_CONFIG" ]; then
   else
     # Fallback: simple parsing without yq
     echo "📋 Found existing YAML configuration (parsing without yq)"
-    EXISTING_PLATFORM=$(grep -A 2 "^platform:" "$YAML_CONFIG" | grep "type:" | sed 's/.*"\([^"]*\)".*/\1/' | head -1)
+    # Parse YAML with support for various quote formats
+    EXISTING_PLATFORM=$(grep -A 5 "^platform:" "$YAML_CONFIG" | grep "type:" | sed 's/.*type:[ ]*//g' | sed 's/[\"'\'']*//g' | sed 's/[ ]*#.*//g' | head -1)
     if [ -z "$EXISTING_PLATFORM" ]; then
       EXISTING_PLATFORM="github"
     fi

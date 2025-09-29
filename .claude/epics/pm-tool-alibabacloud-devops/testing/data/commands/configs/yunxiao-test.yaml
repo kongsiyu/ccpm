@@ -1,0 +1,13 @@
+# 云效平台命令测试配置
+platform:
+  type: "yunxiao"
+  project_id: "test-compatibility-project"
+
+testing:
+  mode: "command_compatibility"
+  verify_platform_detection: true
+  verify_command_execution: false  # 避免实际执行命令
+
+metadata:
+  test_suite: "ccpm_commands_compatibility"
+  created_at: "2025-09-28T13:52:09Z"

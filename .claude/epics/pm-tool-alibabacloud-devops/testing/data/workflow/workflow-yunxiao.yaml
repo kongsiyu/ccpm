@@ -1,0 +1,17 @@
+# 云效平台工作流程配置
+platform:
+  type: "yunxiao"
+  project_id: "test-integration-project"
+
+workflow:
+  prd_to_epic: true
+  epic_to_task: true
+  auto_sync: true
+
+testing:
+  mode: "integration"
+  cleanup_after: true
+
+metadata:
+  test_run_id: "workflow-yunxiao-1759067336"
+  created_at: "2025-09-28T13:48:56Z"

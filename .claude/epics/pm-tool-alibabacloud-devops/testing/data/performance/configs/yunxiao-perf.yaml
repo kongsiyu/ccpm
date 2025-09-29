@@ -1,0 +1,7 @@
+platform:
+  type: "yunxiao"
+  project_id: "test-performance-project"
+testing:
+  mode: "performance"
+  iterations: 5
+  timeout: 30000

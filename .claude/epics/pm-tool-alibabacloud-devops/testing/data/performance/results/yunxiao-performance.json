@@ -1,0 +1,8 @@
+{
+  "platform": "yunxiao",
+  "config_load_time": 27,
+  "file_ops_time": 29,
+  "query_time": 43,
+  "average_time": 33,
+  "timestamp": "2025-09-28T13:55:08Z"
+}

@@ -1,0 +1,6 @@
+platform:
+  type: "github"
+testing:
+  mode: "performance"
+  iterations: 5
+  timeout: 30000
