@@ -1,0 +1,199 @@
+{
+  "sync_report": {
+    "session_id": "sync-20250930-123456-12345",
+    "timestamp": "2025-09-30T01:34:16Z",
+    "sync_mode": "incremental",
+    "sync_direction": "bidirectional",
+    "epic_name": "example-epic",
+    "status": "completed",
+    "duration_seconds": 120,
+    "start_time": "2025-09-30T01:32:16Z",
+    "end_time": "2025-09-30T01:34:16Z"
+  },
+  "summary": {
+    "total_items": 10,
+    "processed_items": 10,
+    "successful_items": 8,
+    "failed_items": 1,
+    "skipped_items": 1,
+    "conflicts_detected": 2,
+    "conflicts_resolved": 2
+  },
+  "operations": {
+    "local_to_remote": {
+      "created": 2,
+      "updated": 3,
+      "failed": 0,
+      "skipped": 1
+    },
+    "remote_to_local": {
+      "created": 1,
+      "updated": 2,
+      "failed": 1,
+      "skipped": 0
+    }
+  },
+  "phases": {
+    "initialization": {
+      "status": "completed",
+      "duration_seconds": 5,
+      "details": "环境初始化和配置验证"
+    },
+    "local_collection": {
+      "status": "completed",
+      "duration_seconds": 15,
+      "details": "收集本地Epic和任务变更",
+      "items_collected": 6
+    },
+    "remote_collection": {
+      "status": "completed",
+      "duration_seconds": 20,
+      "details": "收集云效工作项变更",
+      "items_collected": 4
+    },
+    "conflict_detection": {
+      "status": "completed",
+      "duration_seconds": 10,
+      "details": "检测同步冲突",
+      "conflicts_found": 2
+    },
+    "local_to_remote_sync": {
+      "status": "completed",
+      "duration_seconds": 30,
+      "details": "本地到云效同步",
+      "items_synced": 6
+    },
+    "remote_to_local_sync": {
+      "status": "completed",
+      "duration_seconds": 25,
+      "details": "云效到本地同步",
+      "items_synced": 3
+    },
+    "validation": {
+      "status": "completed",
+      "duration_seconds": 10,
+      "details": "同步结果验证",
+      "validation_level": "basic"
+    },
+    "cleanup": {
+      "status": "completed",
+      "duration_seconds": 5,
+      "details": "清理临时文件和释放资源"
+    }
+  },
+  "items": [
+    {
+      "local_id": "epic:example-epic",
+      "local_path": ".claude/epics/example-epic/epic.md",
+      "yunxiao_id": "12345",
+      "type": "epic",
+      "operation": "updated",
+      "direction": "local_to_remote",
+      "status": "success",
+      "timestamp": "2025-09-30T01:33:30Z",
+      "message": "Epic同步成功"
+    },
+    {
+      "local_id": "task:example-epic/001",
+      "local_path": ".claude/epics/example-epic/001.md",
+      "yunxiao_id": "12346",
+      "type": "task",
+      "operation": "created",
+      "direction": "remote_to_local",
+      "status": "success",
+      "timestamp": "2025-09-30T01:33:45Z",
+      "message": "新任务创建成功"
+    },
+    {
+      "local_id": "task:example-epic/002",
+      "local_path": ".claude/epics/example-epic/002.md",
+      "yunxiao_id": "12347",
+      "type": "task",
+      "operation": "updated",
+      "direction": "bidirectional",
+      "status": "conflict_resolved",
+      "timestamp": "2025-09-30T01:33:50Z",
+      "message": "冲突已解决，使用时间戳优先策略",
+      "conflict_resolution": "timestamp_priority"
+    }
+  ],
+  "conflicts": [
+    {
+      "conflict_id": "conflict-001",
+      "type": "content",
+      "subtype": "concurrent_modification",
+      "local_id": "task:example-epic/002",
+      "yunxiao_id": "12347",
+      "description": "本地和远程都在最近同步后修改过",
+      "detected_time": "2025-09-30T01:33:20Z",
+      "resolution_strategy": "timestamp_priority",
+      "resolved_time": "2025-09-30T01:33:50Z",
+      "status": "resolved"
+    },
+    {
+      "conflict_id": "conflict-002",
+      "type": "metadata",
+      "subtype": "inconsistent_yunxiao_id",
+      "local_id": "epic:example-epic",
+      "yunxiao_id": "12345",
+      "description": "本地文件中的yunxiao_id与映射不一致",
+      "detected_time": "2025-09-30T01:33:25Z",
+      "resolution_strategy": "update_local_metadata",
+      "resolved_time": "2025-09-30T01:33:35Z",
+      "status": "resolved"
+    }
+  ],
+  "errors": [
+    {
+      "error_id": "error-001",
+      "type": "network",
+      "timestamp": "2025-09-30T01:33:55Z",
+      "message": "云效API调用超时",
+      "context": "更新工作项 12348",
+      "retries": 3,
+      "final_status": "failed"
+    }
+  ],
+  "warnings": [
+    {
+      "warning_id": "warning-001",
+      "type": "validation",
+      "timestamp": "2025-09-30T01:34:00Z",
+      "message": "任务文件缺少assignee字段",
+      "context": ".claude/epics/example-epic/003.md"
+    }
+  ],
+  "performance": {
+    "items_per_second": 5,
+    "api_calls_made": 15,
+    "api_call_avg_time_ms": 500,
+    "cache_hits": 8,
+    "cache_misses": 7,
+    "memory_usage_mb": 25,
+    "disk_operations": 20
+  },
+  "validation": {
+    "validation_id": "validation-20250930-123456",
+    "level": "basic",
+    "status": "passed",
+    "total_checks": 15,
+    "passed": 13,
+    "failed": 0,
+    "warnings": 2,
+    "skipped": 0,
+    "duration_seconds": 10
+  },
+  "recommendations": [
+    "考虑增加缓存配置以提高API调用性能",
+    "建议定期清理映射文件中的过期条目",
+    "可以启用自动冲突解决功能减少手动干预"
+  ],
+  "metadata": {
+    "ccpm_version": "1.0.0",
+    "sync_engine_version": "1.0.0",
+    "yunxiao_mcp_version": "1.0.0",
+    "environment": "production",
+    "user": "system",
+    "report_format_version": "1.0"
+  }
+}
