@@ -16,7 +16,7 @@ source "$SCRIPT_DIR/yunxiao.sh"
 # Usage: get_platform_type
 # Returns: "github" | "yunxiao" (默认返回github)
 get_platform_type() {
-    local config_file=".ccpm-config.yaml"
+    local config_file=".claude/.ccpm-config.yaml"
 
     # 如果配置文件不存在，默认使用GitHub
     if [[ ! -f "$config_file" ]]; then
@@ -43,7 +43,7 @@ get_platform_type() {
 # Usage: get_project_id
 # Returns: project_id string or empty if not found
 get_project_id() {
-    local config_file=".ccpm-config.yaml"
+    local config_file=".claude/.ccpm-config.yaml"
 
     if [[ ! -f "$config_file" ]]; then
         echo ""
@@ -428,12 +428,12 @@ require_platform_config() {
 # Usage: smart_platform_detection
 smart_platform_detection() {
     local platform=$(get_platform_type)
-    local config_file=".ccpm-config.yaml"
+    local config_file=".claude/.ccpm-config.yaml"
 
     # 如果没有配置文件，提供创建建议
     if [[ ! -f "$config_file" ]]; then
         info "未找到平台配置文件，使用默认GitHub平台"
-        info "要使用云效平台，请创建 .ccpm-config.yaml 文件:"
+        info "要使用云效平台，请创建 .claude/.ccpm-config.yaml 文件:"
         echo "  platform: yunxiao"
         echo "  project_id: <您的项目ID>"
         echo ""

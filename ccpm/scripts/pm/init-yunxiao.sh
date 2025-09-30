@@ -15,7 +15,7 @@ source "$LIB_DIR/yunxiao.sh"
 # 常量定义
 # =============================================================================
 
-CONFIG_FILE=".ccpm-config.yaml"
+CONFIG_FILE=".claude/.ccpm-config.yaml"
 CACHE_DIR=".claude/cache/yunxiao"
 LOG_DIR=".claude/logs"
 LOG_FILE="$LOG_DIR/yunxiao.log"
@@ -137,7 +137,10 @@ check_dependencies() {
         echo "  • jq: apt install jq / brew install jq"
         echo "  • curl: 通常系统自带，或 apt install curl"
         echo ""
-        if ! confirm "是否继续初始化（某些功能可能不可用）?"; then
+        # 检查是否为非交互环境
+        if [ ! -t 0 ]; then
+            warning "非交互环境下检测到缺少依赖，将继续运行（某些功能可能不可用）"
+        elif ! confirm "是否继续初始化（某些功能可能不可用）?"; then
             error_exit "用户取消初始化"
         fi
     else
@@ -588,6 +591,13 @@ main() {
     # 设置错误处理
     set_strict_mode
 
+    # 检测是否在非交互环境中运行
+    local NON_INTERACTIVE=false
+    if [ ! -t 0 ]; then
+        NON_INTERACTIVE=true
+        info "检测到非交互环境，将跳过所有确认提示"
+    fi
+
     # 显示横幅
     print_banner
 
@@ -602,13 +612,20 @@ main() {
         create_cache_directories
 
         # 运行诊断（如果用户需要）
-        if confirm "是否运行诊断检查?"; then
+        if [ "$NON_INTERACTIVE" = false ] && confirm "是否运行诊断检查?"; then
             run_diagnostics
             auto_fix_common_issues
+        elif [ "$NON_INTERACTIVE" = true ]; then
+            info "跳过诊断检查（非交互模式）"
         fi
 
         print_success_summary
         return 0
+    fi
+
+    # 非交互环境下不能运行配置向导
+    if [ "$NON_INTERACTIVE" = true ]; then
+        error_exit "配置不完整且当前为非交互环境，无法运行配置向导。请在交互终端中运行此脚本。"
     fi
 
     # 3. 运行配置向导

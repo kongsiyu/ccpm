@@ -19,9 +19,15 @@ set_strict_mode() {
 error_exit() {
     local message="$1"
     local exit_code="${2:-1}"
-    
+
     echo "❌ Error: $message" >&2
     exit "$exit_code"
+}
+
+# Alias for error_exit (for backwards compatibility)
+# Usage: error "Error message" [exit_code]
+error() {
+    error_exit "$@"
 }
 
 # Print warning message (non-fatal)
