@@ -11,6 +11,39 @@ Push local updates as GitHub issue comments for transparent audit trail.
 /pm:issue-sync <issue_number>
 ```
 
+## Platform Detection and Routing
+
+```bash
+# Load platform detection library
+source ".claude/lib/platform-detection.sh"
+
+# Perform smart platform detection
+if ! smart_platform_detection; then
+    echo "❌ 平台配置检测失败，请检查配置"
+    exit 1
+fi
+
+# Route to platform-specific implementation
+platform=$(get_platform_type)
+echo "🔄 检测到平台: $platform，正在路由到对应的issue-sync实现..."
+
+case "$platform" in
+    "yunxiao")
+        # Route to Yunxiao issue-sync implementation
+        echo "🚀 路由到云效平台的issue-sync实现"
+        route_to_platform_script_dir "issue-sync" "sync-main.sh" "$@"
+        ;;
+    "github")
+        echo "✅ 使用GitHub平台的issue-sync实现"
+        # Continue with current GitHub implementation below
+        ;;
+    *)
+        echo "❌ 不支持的平台类型: $platform"
+        exit 1
+        ;;
+esac
+```
+
 ## Required Rules
 
 **IMPORTANT:** Before executing this command, read and follow:

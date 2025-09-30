@@ -1,0 +1,250 @@
+# CCPM 云效平台配置模板
+# 复制此文件到项目根目录并重命名为 .ccpm-config.yaml
+
+# =============================================================================
+# 基础配置 (必需)
+# =============================================================================
+
+# 平台类型: yunxiao (云效) 或 github
+platform: yunxiao
+
+# 云效项目ID (在项目URL中可以找到)
+# 例如: https://devops.aliyun.com/projex/12345678/summary
+project_id: 12345678
+
+# =============================================================================
+# API配置 (可选)
+# =============================================================================
+
+api:
+  # API端点地址
+  endpoint: "https://devops.aliyun.com"
+
+  # 请求超时时间 (毫秒)
+  timeout: 30000
+
+  # 重试次数
+  retry_attempts: 3
+
+  # 请求速率限制 (请求/分钟)
+  rate_limit: 100
+
+# =============================================================================
+# 缓存配置 (推荐启用)
+# =============================================================================
+
+cache:
+  # 是否启用缓存
+  enabled: true
+
+  # 缓存过期时间 (秒)
+  ttl: 300
+
+  # 缓存策略: lru, fifo, lfu
+  strategy: "lru"
+
+  # 最大缓存条目数
+  max_size: 1000
+
+# =============================================================================
+# 重试策略 (可选)
+# =============================================================================
+
+retry:
+  # 最大重试次数
+  max_attempts: 3
+
+  # 初始退避时间 (毫秒)
+  backoff_ms: 1000
+
+  # 是否使用指数退避
+  exponential: true
+
+  # 最大退避时间 (毫秒)
+  max_backoff_ms: 10000
+
+# =============================================================================
+# 日志配置 (可选)
+# =============================================================================
+
+logging:
+  # 日志级别: debug, info, warn, error
+  level: info
+
+  # 日志文件路径
+  file: .ccpm.log
+
+  # 日志文件最大大小 (MB)
+  max_size: 10
+
+  # 保留的日志文件数量
+  max_files: 5
+
+  # 是否启用控制台输出
+  console: true
+
+# =============================================================================
+# 团队协作配置 (可选)
+# =============================================================================
+
+team:
+  # 团队成员配置
+  members:
+    - name: "产品经理"
+      role: "product-manager"
+      yunxiao_id: "pm001"
+      email: "pm@example.com"
+
+    - name: "技术负责人"
+      role: "tech-lead"
+      yunxiao_id: "tl001"
+      email: "tl@example.com"
+
+    - name: "开发工程师"
+      role: "developer"
+      yunxiao_id: "dev001"
+      email: "dev@example.com"
+
+  # 默认分配规则
+  assignment:
+    # 自动分配任务
+    auto_assign: true
+
+    # 分配策略: round-robin, workload-based, manual
+    strategy: "workload-based"
+
+    # 最大并行任务数
+    max_concurrent_tasks: 3
+
+# =============================================================================
+# 工作流配置 (可选)
+# =============================================================================
+
+workflow:
+  # 是否需要代码审查
+  review_required: true
+
+  # 是否需要测试通过
+  testing_required: true
+
+  # 自动合并条件
+  auto_merge:
+    enabled: false
+    conditions:
+      - "all_checks_passed"
+      - "approved_by_reviewer"
+      - "no_conflicts"
+
+  # 分支命名规范
+  branch_naming:
+    epic_prefix: "epic/"
+    feature_prefix: "feature/"
+    bugfix_prefix: "bugfix/"
+    hotfix_prefix: "hotfix/"
+
+# =============================================================================
+# 性能优化配置 (高级)
+# =============================================================================
+
+performance:
+  # 批量操作设置
+  batch_size: 50
+
+  # 并发请求数
+  concurrent_requests: 5
+
+  # 预加载配置
+  preload:
+    enabled: true
+    # 预加载的数据类型
+    types: ["workitems", "sprints", "users"]
+
+  # 网络优化
+  network:
+    # 保持连接
+    keep_alive: true
+
+    # 启用压缩
+    compression: true
+
+    # HTTP/2支持
+    http2: true
+
+# =============================================================================
+# 安全配置 (重要)
+# =============================================================================
+
+security:
+  # 审计日志
+  audit:
+    enabled: true
+    log_file: "ccpm-audit.log"
+    include_sensitive: false
+
+  # 访问控制
+  access_control:
+    # IP白名单 (可选)
+    allowed_ips: []
+
+    # 操作权限检查
+    permission_check: true
+
+# =============================================================================
+# 开发环境配置 (开发时使用)
+# =============================================================================
+
+development:
+  # 调试模式
+  debug: false
+
+  # 详细日志
+  verbose: false
+
+  # 模拟模式 (不实际执行操作)
+  dry_run: false
+
+  # 测试数据
+  mock_data:
+    enabled: false
+    data_file: "mock-data.json"
+
+# =============================================================================
+# 集成配置 (可选)
+# =============================================================================
+
+integrations:
+  # 钉钉通知
+  dingtalk:
+    enabled: false
+    webhook_url: ""
+    secret: ""
+
+  # 企业微信通知
+  wechat_work:
+    enabled: false
+    corp_id: ""
+    agent_id: ""
+    secret: ""
+
+  # 邮件通知
+  email:
+    enabled: false
+    smtp_server: ""
+    username: ""
+    password: ""
+
+# =============================================================================
+# 自定义配置 (扩展使用)
+# =============================================================================
+
+custom:
+  # 您可以在这里添加项目特定的配置
+  # 例如:
+  # feature_flags:
+  #   new_ui: true
+  #   beta_features: false
+
+  # 自定义字段映射
+  # field_mapping:
+  #   priority: "yunxiao_priority"
+  #   status: "yunxiao_status"

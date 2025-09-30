@@ -1,0 +1,35 @@
+{
+  "workitem": {
+    "id": null,
+    "type": "epic",
+    "title": "{{title}}",
+    "description": "{{description}}",
+    "status": "新建",
+    "priority": "{{priority}}",
+    "assignee": "{{assignee}}",
+    "creator": null,
+    "created_time": null,
+    "updated_time": null,
+    "custom_fields": {
+      "business_objectives": "",
+      "success_criteria": "",
+      "target_release": null,
+      "start_date": null,
+      "end_date": null,
+      "budget": null,
+      "stakeholders": [],
+      "child_requirements": [],
+      "progress_percentage": 0,
+      "milestones": [],
+      "risks": [],
+      "dependencies": []
+    },
+    "attachments": [],
+    "comments": [],
+    "workflow": {
+      "current_step": "规划",
+      "next_steps": ["设计", "开发", "验收"],
+      "approval_required": true
+    }
+  }
+}

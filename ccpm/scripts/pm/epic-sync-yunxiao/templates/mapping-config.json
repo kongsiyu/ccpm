@@ -1,0 +1,112 @@
+{
+  "mappings": {
+    "epic:example-epic": {
+      "local_id": "epic:example-epic",
+      "local_path": ".claude/epics/example-epic/epic.md",
+      "yunxiao_workitem_id": "12345",
+      "mapping_type": "epic_to_requirement",
+      "sync_direction": "bidirectional",
+      "sync_fields": ["title", "description", "status", "progress"],
+      "created": "2025-09-30T01:34:16Z",
+      "last_sync": null,
+      "sync_count": 0,
+      "status": "active"
+    },
+    "task:example-epic/001": {
+      "local_id": "task:example-epic/001",
+      "local_path": ".claude/epics/example-epic/001.md",
+      "yunxiao_workitem_id": "12346",
+      "mapping_type": "task_to_task",
+      "sync_direction": "bidirectional",
+      "sync_fields": ["title", "description", "status", "assignee"],
+      "created": "2025-09-30T01:34:16Z",
+      "last_sync": null,
+      "sync_count": 0,
+      "status": "active"
+    }
+  },
+  "config": {
+    "auto_create_missing": true,
+    "conflict_resolution": "manual",
+    "sync_frequency": "hourly",
+    "last_sync": null,
+    "version": "1.0",
+    "field_mappings": {
+      "epic": {
+        "local_to_remote": {
+          "name": "title",
+          "description": "description",
+          "status": "status",
+          "created": "created_time",
+          "updated": "updated_time"
+        },
+        "remote_to_local": {
+          "title": "name",
+          "description": "description",
+          "status": "status",
+          "created_time": "created",
+          "updated_time": "updated"
+        },
+        "status_mapping": {
+          "open": "新建",
+          "in_progress": "进行中",
+          "completed": "已完成",
+          "closed": "已关闭",
+          "paused": "暂停",
+          "cancelled": "已取消"
+        }
+      },
+      "task": {
+        "local_to_remote": {
+          "name": "title",
+          "description": "description",
+          "status": "status",
+          "assignee": "assignee",
+          "created": "created_time",
+          "updated": "updated_time"
+        },
+        "remote_to_local": {
+          "title": "name",
+          "description": "description",
+          "status": "status",
+          "assignee": "assignee",
+          "created_time": "created",
+          "updated_time": "updated"
+        },
+        "status_mapping": {
+          "open": "新建",
+          "in_progress": "进行中",
+          "completed": "已完成",
+          "closed": "已关闭",
+          "paused": "暂停",
+          "cancelled": "已取消"
+        }
+      }
+    },
+    "sync_rules": {
+      "incremental_sync": {
+        "enabled": true,
+        "check_interval": 300,
+        "max_batch_size": 50
+      },
+      "conflict_handling": {
+        "strategy": "manual",
+        "auto_resolve_trivial": true,
+        "timestamp_priority": true,
+        "backup_before_resolve": true
+      },
+      "validation": {
+        "level": "basic",
+        "strict_mode": false,
+        "auto_fix": false
+      }
+    }
+  },
+  "metadata": {
+    "created": "2025-09-30T01:34:16Z",
+    "updated": "2025-09-30T01:34:16Z",
+    "total_mappings": 2,
+    "template_version": "1.0",
+    "description": "Epic-Yunxiao同步映射配置模板"
+  }
+}

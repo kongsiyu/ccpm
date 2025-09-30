@@ -22,6 +22,39 @@ This command implements a bidirectional sync that:
 - **Progress reporting**: Posts progress comments to GitHub issues
 - **Auto-closes**: Closes GitHub issues when locally marked as completed
 
+## Platform Detection and Routing
+
+```bash
+# Load platform detection library
+source ".claude/lib/platform-detection.sh"
+
+# Perform smart platform detection
+if ! smart_platform_detection; then
+    echo "❌ 平台配置检测失败，请检查配置"
+    exit 1
+fi
+
+# Route to platform-specific implementation
+platform=$(get_platform_type)
+echo "🔄 检测到平台: $platform，正在路由到对应的epic-sync实现..."
+
+case "$platform" in
+    "yunxiao")
+        # Route to Yunxiao epic-sync directory scripts
+        echo "🚀 路由到云效平台的epic-sync实现"
+        route_to_platform_script_dir "epic-sync" "sync-main.sh" "$@"
+        ;;
+    "github")
+        echo "✅ 使用GitHub平台的epic-sync实现"
+        # Continue with current GitHub implementation below
+        ;;
+    *)
+        echo "❌ 不支持的平台类型: $platform"
+        exit 1
+        ;;
+esac
+```
+
 ## Quick Check
 
 ```bash

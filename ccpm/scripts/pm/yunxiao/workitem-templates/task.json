@@ -1,0 +1,32 @@
+{
+  "workitem": {
+    "id": null,
+    "type": "task",
+    "title": "{{title}}",
+    "description": "{{description}}",
+    "status": "新建",
+    "priority": "{{priority}}",
+    "assignee": "{{assignee}}",
+    "creator": null,
+    "created_time": null,
+    "updated_time": null,
+    "custom_fields": {
+      "estimated_hours": null,
+      "actual_hours": null,
+      "parent_requirement": null,
+      "sprint": null,
+      "labels": [],
+      "components": [],
+      "subtasks": [],
+      "blocks": [],
+      "depends_on": []
+    },
+    "attachments": [],
+    "comments": [],
+    "workflow": {
+      "current_step": "待开始",
+      "next_steps": ["进行中", "待验证"],
+      "approval_required": false
+    }
+  }
+}
