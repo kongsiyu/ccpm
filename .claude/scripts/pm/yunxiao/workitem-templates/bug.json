@@ -1,0 +1,35 @@
+{
+  "workitem": {
+    "id": null,
+    "type": "bug",
+    "title": "{{title}}",
+    "description": "{{description}}",
+    "status": "新建",
+    "priority": "{{priority}}",
+    "assignee": "{{assignee}}",
+    "creator": null,
+    "created_time": null,
+    "updated_time": null,
+    "custom_fields": {
+      "severity": "中等",
+      "environment": "生产环境",
+      "browser": null,
+      "os": null,
+      "steps_to_reproduce": "",
+      "expected_result": "",
+      "actual_result": "",
+      "workaround": "",
+      "affected_versions": [],
+      "fix_versions": [],
+      "root_cause": "",
+      "resolution": ""
+    },
+    "attachments": [],
+    "comments": [],
+    "workflow": {
+      "current_step": "待确认",
+      "next_steps": ["已确认", "待修复", "重复缺陷"],
+      "approval_required": false
+    }
+  }
+}
