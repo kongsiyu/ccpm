@@ -337,11 +337,11 @@ test_script_integrity() {
 
     # 检查关键GitHub脚本是否存在且可执行
     local critical_scripts=(
-        ".claude/scripts/pm/epic-list.sh"
-        ".claude/scripts/pm/epic-status.sh"
-        ".claude/scripts/pm/status.sh"
-        ".claude/scripts/pm/standup.sh"
-        ".claude/scripts/pm/next.sh"
+        "ccpm/scripts/pm/epic-list.sh"
+        "ccpm/scripts/pm/epic-status.sh"
+        "ccpm/scripts/pm/status.sh"
+        "ccpm/scripts/pm/standup.sh"
+        "ccpm/scripts/pm/next.sh"
     )
 
     for script in "${critical_scripts[@]}"; do

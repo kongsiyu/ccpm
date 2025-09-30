@@ -11,14 +11,13 @@ set -u
 
 # 获取脚本目录
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(cd "$SCRIPT_DIR/../../../.." && pwd)"
-CLAUDE_DIR="$PROJECT_ROOT/.claude"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
 
 # 加载测试工具
-source "$CLAUDE_DIR/tests/utils/test-framework.sh"
+source "$PROJECT_ROOT/tests/utils/test-framework.sh"
 
 # 加载平台检测库
-source "$CLAUDE_DIR/lib/platform-detection.sh"
+source "$PROJECT_ROOT/ccpm/lib/platform-detection.sh"
 
 # 测试环境配置
 TEST_NAME="云效功能完整性测试"
@@ -103,7 +102,7 @@ test_platform_detection() {
     rm -f "$PROJECT_ROOT/.ccpm-config.yaml"
 
     local platform
-    platform=$(cd "$PROJECT_ROOT" && source "$CLAUDE_DIR/lib/platform-detection.sh" && get_platform_type)
+    platform=$(cd "$PROJECT_ROOT" && source "ccpm/lib/platform-detection.sh" && get_platform_type)
 
     if [ "$platform" = "github" ]; then
         record_test_result "平台检测 - 默认GitHub" "PASS" "无配置时正确返回github"
@@ -115,7 +114,7 @@ test_platform_detection() {
     echo "测试2: 云效配置检测"
     create_yunxiao_test_config
 
-    platform=$(cd "$PROJECT_ROOT" && source .claude/lib/platform-detection.sh && get_platform_type)
+    platform=$(cd "$PROJECT_ROOT" && source ccpm/lib/platform-detection.sh && get_platform_type)
 
     if [ "$platform" = "yunxiao" ]; then
         record_test_result "平台检测 - 云效平台" "PASS" "正确检测到yunxiao平台"
@@ -129,7 +128,7 @@ test_platform_detection() {
 platform: github
 EOF
 
-    platform=$(cd "$PROJECT_ROOT" && source .claude/lib/platform-detection.sh && get_platform_type)
+    platform=$(cd "$PROJECT_ROOT" && source ccpm/lib/platform-detection.sh && get_platform_type)
 
     if [ "$platform" = "github" ]; then
         record_test_result "平台检测 - GitHub配置" "PASS" "正确检测到github平台"
@@ -143,7 +142,7 @@ EOF
 platform: invalid_platform
 EOF
 
-    platform=$(cd "$PROJECT_ROOT" && source .claude/lib/platform-detection.sh && get_platform_type)
+    platform=$(cd "$PROJECT_ROOT" && source ccpm/lib/platform-detection.sh && get_platform_type)
 
     if [ "$platform" = "github" ]; then
         record_test_result "平台检测 - 无效平台回退" "PASS" "无效配置正确回退到github"
@@ -167,7 +166,7 @@ test_config_validation() {
 platform: yunxiao
 EOF
 
-    if ! (cd "$PROJECT_ROOT" && source "$CLAUDE_DIR/lib/platform-detection.sh" && validate_yunxiao_platform_config 2>/dev/null); then
+    if ! (cd "$PROJECT_ROOT" && source "ccpm/lib/platform-detection.sh" && validate_yunxiao_platform_config 2>/dev/null); then
         record_test_result "配置验证 - 缺少project_id" "PASS" "正确检测到缺少project_id"
     else
         record_test_result "配置验证 - 缺少project_id" "FAIL" "应该验证失败但通过了"
@@ -180,7 +179,7 @@ platform: yunxiao
 project_id: invalid_id
 EOF
 
-    if ! (cd "$PROJECT_ROOT" && source "$CLAUDE_DIR/lib/platform-detection.sh" && validate_yunxiao_platform_config 2>/dev/null); then
+    if ! (cd "$PROJECT_ROOT" && source "ccpm/lib/platform-detection.sh" && validate_yunxiao_platform_config 2>/dev/null); then
         record_test_result "配置验证 - project_id格式错误" "PASS" "正确检测到格式错误"
     else
         record_test_result "配置验证 - project_id格式错误" "FAIL" "应该验证失败但通过了"
@@ -192,7 +191,7 @@ EOF
 
     # 只测试配置格式，不测试MCP连接
     local project_id
-    project_id=$(cd "$PROJECT_ROOT" && source "$CLAUDE_DIR/lib/platform-detection.sh" && get_project_id)
+    project_id=$(cd "$PROJECT_ROOT" && source "ccpm/lib/platform-detection.sh" && get_project_id)
 
     if [ "$project_id" = "$TEST_PROJECT_ID" ]; then
         record_test_result "配置验证 - 有效配置" "PASS" "配置格式验证通过"
@@ -218,11 +217,11 @@ EOF
 
     # 检查路由逻辑（不实际执行命令）
     local platform
-    platform=$(cd "$PROJECT_ROOT" && source "$CLAUDE_DIR/lib/platform-detection.sh" && get_platform_type)
+    platform=$(cd "$PROJECT_ROOT" && source "ccpm/lib/platform-detection.sh" && get_platform_type)
 
     if [ "$platform" = "github" ]; then
         # 验证GitHub脚本存在
-        if [ -f "$CLAUDE_DIR/scripts/pm/status.sh" ]; then
+        if [ -f "$PROJECT_ROOT/ccpm/scripts/pm/status.sh" ]; then
             record_test_result "命令路由 - GitHub脚本" "PASS" "GitHub脚本路径正确"
         else
             record_test_result "命令路由 - GitHub脚本" "FAIL" "GitHub脚本不存在"
@@ -235,11 +234,11 @@ EOF
     echo "测试2: 云效命令路由"
     create_yunxiao_test_config
 
-    platform=$(cd "$PROJECT_ROOT" && source .claude/lib/platform-detection.sh && get_platform_type)
+    platform=$(cd "$PROJECT_ROOT" && source ccpm/lib/platform-detection.sh && get_platform_type)
 
     if [ "$platform" = "yunxiao" ]; then
         # 验证云效脚本存在
-        if [ -f "$CLAUDE_DIR/scripts/pm/init-yunxiao.sh" ]; then
+        if [ -f "$PROJECT_ROOT/ccpm/scripts/pm/init-yunxiao.sh" ]; then
             record_test_result "命令路由 - 云效脚本" "PASS" "云效脚本路径正确"
         else
             record_test_result "命令路由 - 云效脚本" "FAIL" "云效脚本不存在"
@@ -257,7 +256,7 @@ EOF
 platform: github
 EOF
 
-    next_platform=$(cd "$PROJECT_ROOT" && source .claude/lib/platform-detection.sh && get_platform_type)
+    next_platform=$(cd "$PROJECT_ROOT" && source ccpm/lib/platform-detection.sh && get_platform_type)
 
     if [ "$next_platform" = "github" ] && [ "$prev_platform" = "yunxiao" ]; then
         record_test_result "命令路由 - 平台切换" "PASS" "平台切换后路由正确更新"
@@ -292,7 +291,7 @@ test_yunxiao_workitem_crud() {
 
     local all_scripts_exist=true
     for script in "${crud_scripts[@]}"; do
-        if [ ! -f "$CLAUDE_DIR/scripts/pm/$script" ]; then
+        if [ ! -f "$PROJECT_ROOT/ccpm/scripts/pm/$script" ]; then
             all_scripts_exist=false
             echo "  ❌ 缺少脚本: $script"
         fi
@@ -306,7 +305,7 @@ test_yunxiao_workitem_crud() {
 
     # 测试2: 工作项公共库存在性
     echo "测试2: 工作项公共库"
-    if [ -f "$CLAUDE_DIR/scripts/pm/yunxiao/workitem-common.sh" ]; then
+    if [ -f "$PROJECT_ROOT/ccpm/scripts/pm/yunxiao/workitem-common.sh" ]; then
         record_test_result "工作项CRUD - 公共库" "PASS" "公共库文件存在"
     else
         record_test_result "工作项CRUD - 公共库" "FAIL" "公共库文件不存在"
@@ -340,7 +339,7 @@ test_epic_sync_functionality() {
 
     local all_scripts_exist=true
     for script in "${epic_sync_scripts[@]}"; do
-        if [ ! -f "$CLAUDE_DIR/scripts/pm/$script" ]; then
+        if [ ! -f "$PROJECT_ROOT/ccpm/scripts/pm/$script" ]; then
             all_scripts_exist=false
             echo "  ❌ 缺少脚本: $script"
         fi
@@ -364,7 +363,7 @@ test_epic_sync_functionality() {
 
     all_scripts_exist=true
     for script in "${issue_sync_scripts[@]}"; do
-        if [ ! -f "$CLAUDE_DIR/scripts/pm/$script" ]; then
+        if [ ! -f "$PROJECT_ROOT/ccpm/scripts/pm/$script" ]; then
             all_scripts_exist=false
             echo "  ❌ 缺少脚本: $script"
         fi
@@ -391,7 +390,7 @@ test_error_handling() {
     rm -f "$PROJECT_ROOT/.ccpm-config.yaml"
 
     local platform
-    platform=$(cd "$PROJECT_ROOT" && source "$CLAUDE_DIR/lib/platform-detection.sh" && get_platform_type)
+    platform=$(cd "$PROJECT_ROOT" && source "ccpm/lib/platform-detection.sh" && get_platform_type)
 
     if [ "$platform" = "github" ]; then
         record_test_result "错误处理 - 缺少配置" "PASS" "正确回退到GitHub默认"
@@ -407,7 +406,7 @@ invalid yaml content
 EOF
 
     # 尝试读取配置（应该回退到默认）
-    platform=$(cd "$PROJECT_ROOT" && source .claude/lib/platform-detection.sh && get_platform_type 2>/dev/null)
+    platform=$(cd "$PROJECT_ROOT" && source ccpm/lib/platform-detection.sh && get_platform_type 2>/dev/null)
 
     if [ "$platform" = "github" ]; then
         record_test_result "错误处理 - 格式错误" "PASS" "格式错误时正确回退"
@@ -419,7 +418,7 @@ EOF
     echo "测试3: 空配置文件处理"
     echo "" > "$PROJECT_ROOT/.ccpm-config.yaml"
 
-    platform=$(cd "$PROJECT_ROOT" && source .claude/lib/platform-detection.sh && get_platform_type)
+    platform=$(cd "$PROJECT_ROOT" && source ccpm/lib/platform-detection.sh && get_platform_type)
 
     if [ "$platform" = "github" ]; then
         record_test_result "错误处理 - 空配置" "PASS" "空配置时正确回退"

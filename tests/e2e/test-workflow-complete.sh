@@ -117,7 +117,7 @@ test_github_workflow() {
     # 测试1: 平台检测
     echo "测试1: 平台检测为GitHub"
     local platform
-    platform=$(cd "$PROJECT_ROOT" && source .claude/lib/platform-detection.sh && get_platform_type)
+    platform=$(cd "$PROJECT_ROOT" && source ccpm/lib/platform-detection.sh && get_platform_type)
 
     if [ "$platform" = "github" ]; then
         record_test_result "GitHub工作流 - 平台检测" "PASS" "平台正确检测为github"
@@ -136,7 +136,7 @@ test_github_workflow() {
 
     local all_accessible=true
     for script in "${github_scripts[@]}"; do
-        if [ ! -f "$PROJECT_ROOT/$script" ]; then
+        if [ ! -f "$PROJECT_ROOT/ccpm/$script" ]; then
             all_accessible=false
             echo "  ❌ 缺少脚本: $script"
         fi
@@ -158,7 +158,7 @@ test_github_workflow() {
 
     local all_commands_work=true
     for cmd in "${test_commands[@]}"; do
-        if ! (cd "$PROJECT_ROOT" && timeout 5s bash ".claude/scripts/pm/$cmd" >/dev/null 2>&1); then
+        if ! (cd "$PROJECT_ROOT" && timeout 5s bash "ccpm/scripts/pm/$cmd" >/dev/null 2>&1); then
             all_commands_work=false
             echo "  ❌ 命令失败: $cmd"
         fi
@@ -186,7 +186,7 @@ test_yunxiao_workflow() {
     # 测试1: 平台检测
     echo "测试1: 平台检测为云效"
     local platform
-    platform=$(cd "$PROJECT_ROOT" && source .claude/lib/platform-detection.sh && get_platform_type)
+    platform=$(cd "$PROJECT_ROOT" && source ccpm/lib/platform-detection.sh && get_platform_type)
 
     if [ "$platform" = "yunxiao" ]; then
         record_test_result "云效工作流 - 平台检测" "PASS" "平台正确检测为yunxiao"
@@ -198,7 +198,7 @@ test_yunxiao_workflow() {
     # 测试2: 项目ID读取
     echo "测试2: 项目ID配置读取"
     local project_id
-    project_id=$(cd "$PROJECT_ROOT" && source .claude/lib/platform-detection.sh && get_project_id)
+    project_id=$(cd "$PROJECT_ROOT" && source ccpm/lib/platform-detection.sh && get_project_id)
 
     if [ "$project_id" = "12345" ]; then
         record_test_result "云效工作流 - 项目ID读取" "PASS" "项目ID正确读取"
@@ -217,7 +217,7 @@ test_yunxiao_workflow() {
 
     local all_accessible=true
     for script in "${yunxiao_scripts[@]}"; do
-        if [ ! -f "$PROJECT_ROOT/$script" ]; then
+        if [ ! -f "$PROJECT_ROOT/ccpm/$script" ]; then
             all_accessible=false
             echo "  ❌ 缺少脚本: $script"
         fi
@@ -255,7 +255,7 @@ test_platform_switching_workflow() {
     rm -f "$PROJECT_ROOT/.ccpm-config.yaml"
 
     local platform
-    platform=$(cd "$PROJECT_ROOT" && source .claude/lib/platform-detection.sh && get_platform_type)
+    platform=$(cd "$PROJECT_ROOT" && source ccpm/lib/platform-detection.sh && get_platform_type)
 
     if [ "$platform" = "github" ]; then
         record_test_result "平台切换 - 默认GitHub" "PASS" "无配置时正确默认到GitHub"
@@ -267,7 +267,7 @@ test_platform_switching_workflow() {
     echo "场景2: GitHub默认 -> 云效配置"
     create_test_config "yunxiao" "12345"
 
-    platform=$(cd "$PROJECT_ROOT" && source .claude/lib/platform-detection.sh && get_platform_type)
+    platform=$(cd "$PROJECT_ROOT" && source ccpm/lib/platform-detection.sh && get_platform_type)
 
     if [ "$platform" = "yunxiao" ]; then
         record_test_result "平台切换 - 切换到云效" "PASS" "成功切换到云效平台"
@@ -279,7 +279,7 @@ test_platform_switching_workflow() {
     echo "场景3: 云效 -> GitHub配置"
     create_test_config "github"
 
-    platform=$(cd "$PROJECT_ROOT" && source .claude/lib/platform-detection.sh && get_platform_type)
+    platform=$(cd "$PROJECT_ROOT" && source ccpm/lib/platform-detection.sh && get_platform_type)
 
     if [ "$platform" = "github" ]; then
         record_test_result "平台切换 - 切换回GitHub" "PASS" "成功切换回GitHub平台"
@@ -291,7 +291,7 @@ test_platform_switching_workflow() {
     echo "场景4: GitHub配置 -> 删除配置 -> 默认GitHub"
     rm -f "$PROJECT_ROOT/.ccpm-config.yaml"
 
-    platform=$(cd "$PROJECT_ROOT" && source .claude/lib/platform-detection.sh && get_platform_type)
+    platform=$(cd "$PROJECT_ROOT" && source ccpm/lib/platform-detection.sh && get_platform_type)
 
     if [ "$platform" = "github" ]; then
         record_test_result "平台切换 - 回到默认" "PASS" "删除配置后正确回到默认GitHub"
@@ -313,7 +313,7 @@ test_platform_switching_workflow() {
             expected="yunxiao"
         fi
 
-        platform=$(cd "$PROJECT_ROOT" && source .claude/lib/platform-detection.sh && get_platform_type)
+        platform=$(cd "$PROJECT_ROOT" && source ccpm/lib/platform-detection.sh && get_platform_type)
 
         if [ "$platform" != "$expected" ]; then
             all_switches_ok=false
@@ -343,12 +343,12 @@ test_command_transparency() {
     # GitHub环境
     create_test_config "github"
     local github_platform
-    github_platform=$(cd "$PROJECT_ROOT" && source .claude/lib/platform-detection.sh && get_platform_type)
+    github_platform=$(cd "$PROJECT_ROOT" && source ccpm/lib/platform-detection.sh && get_platform_type)
 
     # 云效环境
     create_test_config "yunxiao" "12345"
     local yunxiao_platform
-    yunxiao_platform=$(cd "$PROJECT_ROOT" && source .claude/lib/platform-detection.sh && get_platform_type)
+    yunxiao_platform=$(cd "$PROJECT_ROOT" && source ccpm/lib/platform-detection.sh && get_platform_type)
 
     if [ "$github_platform" = "github" ] && [ "$yunxiao_platform" = "yunxiao" ]; then
         record_test_result "命令透明性 - 平台切换" "PASS" "命令在不同平台间透明切换"
@@ -361,7 +361,7 @@ test_command_transparency() {
 
     # 在GitHub环境下，验证路由到正确脚本
     create_test_config "github"
-    if [ -f "$PROJECT_ROOT/scripts/pm/status.sh" ]; then
+    if [ -f "$PROJECT_ROOT/ccpm/scripts/pm/status.sh" ]; then
         record_test_result "命令透明性 - GitHub路由" "PASS" "GitHub命令正确路由"
     else
         record_test_result "命令透明性 - GitHub路由" "FAIL" "GitHub命令路由失败"
@@ -369,7 +369,7 @@ test_command_transparency() {
 
     # 在云效环境下，验证路由到正确脚本
     create_test_config "yunxiao" "12345"
-    if [ -f "$PROJECT_ROOT/scripts/pm/init-yunxiao.sh" ]; then
+    if [ -f "$PROJECT_ROOT/ccpm/scripts/pm/init-yunxiao.sh" ]; then
         record_test_result "命令透明性 - 云效路由" "PASS" "云效命令正确路由"
     else
         record_test_result "命令透明性 - 云效路由" "FAIL" "云效命令路由失败"
@@ -391,8 +391,8 @@ test_config_persistence() {
 
     # 验证配置立即可读
     local platform project_id
-    platform=$(cd "$PROJECT_ROOT" && source .claude/lib/platform-detection.sh && get_platform_type)
-    project_id=$(cd "$PROJECT_ROOT" && source .claude/lib/platform-detection.sh && get_project_id)
+    platform=$(cd "$PROJECT_ROOT" && source ccpm/lib/platform-detection.sh && get_platform_type)
+    project_id=$(cd "$PROJECT_ROOT" && source ccpm/lib/platform-detection.sh && get_project_id)
 
     if [ "$platform" = "yunxiao" ] && [ "$project_id" = "99999" ]; then
         record_test_result "配置持久性 - 写入读取" "PASS" "配置正确持久化"
@@ -404,7 +404,7 @@ test_config_persistence() {
     echo "测试2: 配置修改实时生效"
     create_test_config "github"
 
-    platform=$(cd "$PROJECT_ROOT" && source .claude/lib/platform-detection.sh && get_platform_type)
+    platform=$(cd "$PROJECT_ROOT" && source ccpm/lib/platform-detection.sh && get_platform_type)
 
     if [ "$platform" = "github" ]; then
         record_test_result "配置持久性 - 实时生效" "PASS" "配置修改实时生效"
@@ -416,7 +416,7 @@ test_config_persistence() {
     echo "测试3: 配置删除后恢复默认"
     rm -f "$PROJECT_ROOT/.ccpm-config.yaml"
 
-    platform=$(cd "$PROJECT_ROOT" && source .claude/lib/platform-detection.sh && get_platform_type)
+    platform=$(cd "$PROJECT_ROOT" && source ccpm/lib/platform-detection.sh && get_platform_type)
 
     if [ "$platform" = "github" ]; then
         record_test_result "配置持久性 - 删除恢复默认" "PASS" "配置删除后正确恢复默认"
